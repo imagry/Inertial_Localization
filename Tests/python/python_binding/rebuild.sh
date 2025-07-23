@@ -1,6 +1,6 @@
 #!/bin/bash
 # activate relevant environment
-conda activate auto_vehicle_cont
+source ../vehicle_control_env/bin/activate
 
 # Define the paths
 BUILD_DIR="build"

@@ -36,3 +36,77 @@ source vehicle_control_env/bin/activate
 pip install -r requirements.txt 
 # to install tkiner 
 sudo apt-get install python3-tk
+
+# Additional dependencies
+Some system dependencies are required for building the Python bindings:
+
+```bash
+# Install Eigen3 (required for matrix operations)
+sudo apt-get install libeigen3-dev
+
+# Install CMake (if not already installed)
+sudo apt-get install cmake
+```
+
+# Building the Python bindings
+After setting up the environment, build the Python bindings for the localization module:
+
+```bash
+# Navigate to the python_binding directory
+cd python_binding
+
+# Run the rebuild script
+./rebuild.sh
+```
+
+This will create a `control_module.so` file in the `build` directory that can be imported in Python.
+
+# Using the Python bindings
+Import the control_module in your Python scripts:
+
+```python
+from control_module import AHRSLocHandler, ControlAPI
+
+# Create a localization handler with configuration files
+loc_handler = AHRSLocHandler("vehicle_config.json", "control_config.json")
+
+# Update with IMU data
+# imu_sample = ... # Create IMU sample
+# timestamp = ... # Current timestamp
+# loc_handler.UpdateIMU(imu_sample, timestamp)
+
+# Update with speed data
+# loc_handler.UpdateSpeed(speed, timestamp)
+
+# Update with steering wheel angle
+# loc_handler.UpdateSteeringWheel(steering_wheel_angle, timestamp)
+
+# Update with heading
+# loc_handler.UpdateHeading(heading, timestamp)
+
+# Get position information
+# position = loc_handler.GetPosition()
+
+# Get vehicle heading
+# heading = loc_handler.GetVehicleHeading()
+```
+
+## Available Classes and Methods
+
+The following classes and methods are available in the Python bindings:
+
+1. **AHRSLocHandler**: Main localization handler
+   - `__init__(vehicle_config_path, control_config_path)`: Constructor with config file paths
+   - `UpdateIMU(imu_sample, timestamp)`: Update with IMU data
+   - `UpdateSpeed(speed, timestamp)`: Update vehicle speed
+   - `UpdateSteeringWheel(steering_wheel_angle, timestamp)`: Update steering wheel angle
+   - `UpdateHeading(heading, timestamp)`: Update heading information
+   - `GetPosition()`: Get current position
+   - `GetVehicleHeading()`: Get current heading
+   - `ResetVehicleState()`: Reset vehicle state
+
+2. **ControlAPI**: Main control API with localization integration
+   - `__init__(vehicle_config_path, control_config_path)`: Constructor with config files
+   - Various control-related methods that use localization data
+
+See example scripts in the `python_binding` directory for more usage examples.

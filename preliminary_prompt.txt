@@ -1,0 +1,14 @@
+this repository is forked form a control and localization repository. 
+the target is to refactor this repository to a localization only repo. 
+this needs do be done carefully without breaking functional working code. 
+I want to work on the refactor based on a plan I made in the file /home/eranvertz/git/localization-project-planning/project-planning.md. 
+copy it here under the name localization_separation_plan.md. 
+remove all other objectives and keep only Objective B. 
+the relevant plan is under the heading "Tasks for Objective B: Standalone Localization Repository with API".
+I want to carry out the plan. Tasks for Objective B.
+at this point B1-B4 is carried out we will start from B5. 
+I want to work item by item.
+before starting you will ask for detailed instructions for the item.
+before every action is confirm with me and do not proceed without confirmation.
+every action is then documented in a dedicated md file. 
+create a constant instructions file and keep these instructions in the context.
