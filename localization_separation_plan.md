@@ -29,10 +29,10 @@
 
 ##### Python Bindings and API Enhancement
 
-| Task # | Description | Effort (days) |
-|--------|-------------|---------------|
-| B5 | Create or verify Python bindings (pybind) for localization algorithm | 3 |
-| B6 | Ensure compatibility with existing sensor API | 2 |
+| Task # | Description | Status | Effort (days) |
+|--------|-------------|--------|---------------|
+| B5 | Create or verify Python bindings (pybind) for localization algorithm | ✅ Completed | 3 |
+| B6 | Ensure compatibility with existing sensor API | Pending | 2 |
 
 ##### Testing Framework
 
