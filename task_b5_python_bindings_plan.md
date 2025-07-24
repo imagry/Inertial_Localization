@@ -36,25 +36,8 @@ pybind11::class_<AHRSLocHandler>(m, "AHRSLocHandler")
 #### 2.1 AHRSLocHandler
 Enhance the existing binding with additional methods:
 - `UpdateRearRightSpeed` and `UpdateRearLeftSpeed`: For wheel odometry data
-- `GetLoc`: To access the full localization state
-- Additional helper methods as needed
 
-#### 2.2 ShortTermLocalization
-Add bindings for the `ShortTermLocalization` class:
-- Constructor and configuration methods
-- State access methods
-- Coordinate transformation utilities
 
-#### 2.3 AttitudeEstimator
-Add bindings for the `AttitudeEstimator` (AHRS) class:
-- Constructor and configuration
-- Methods for updating and querying orientation
-
-#### 2.4 SpeedEstimator
-Add bindings for `SpeedEstimator` and its `KalmanFilter` implementation:
-- Constructor and initialization
-- Methods for processing sensor data
-- Access to speed estimates
 
 ### 3. Environment Setup and Build Process
 
