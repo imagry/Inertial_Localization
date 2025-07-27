@@ -381,9 +381,35 @@ class Trip:
         self.speed = pd.read_csv(join(path, 'speed.csv'))
         self.steering = pd.read_csv(join(path, 'steering.csv'))
         self.imu = pd.read_csv(join(path, 'imu.csv'))
+        
+        # Add support for left and right rear wheel speeds
+        try:
+            self.left_rear_wheel_speed = pd.read_csv(join(path, 'left_rear_wheel_speed.csv'))
+            print("Left rear wheel speed data loaded successfully")
+        except FileNotFoundError:
+            self.left_rear_wheel_speed = None
+            print("Warning: Left rear wheel speed data not found")
+            
+        try:
+            self.right_rear_wheel_speed = pd.read_csv(join(path, 'right_rear_wheel_speed.csv'))
+            print("Right rear wheel speed data loaded successfully")
+        except FileNotFoundError:
+            self.right_rear_wheel_speed = None
+            print("Warning: Right rear wheel speed data not found")
+        
+        # Initialize sorted_localization_inputs as empty dictionary
+        self.sorted_localization_inputs = {}
+        
         time_vectors = [np.array(self.steering.time_stamp), np.array(self.gps.time_stamp),
                         np.array(self.speed.time_stamp),
                         np.array(self.imu.time_stamp)]
+        
+        # Add wheel speed vectors if available
+        if self.left_rear_wheel_speed is not None:
+            time_vectors.append(np.array(self.left_rear_wheel_speed.time_stamp))
+        if self.right_rear_wheel_speed is not None:
+            time_vectors.append(np.array(self.right_rear_wheel_speed.time_stamp))
+            
         self.common_time = Functions.align_time_vectors(time_vectors)
         self.steering_interp = np.interp(self.common_time, self.steering.time_stamp, self.steering.data_value)
         self.speed_interp = np.interp(self.common_time, self.speed.time_stamp, self.speed.data_value) / 3.6
@@ -434,6 +460,156 @@ class Trip:
         self.E = self.E[start_index:end_index]
         self.D = self.D[start_index:end_index]
         self.W = self.W[start_index:end_index]
+        
+    def sort_localization_inputs(self, print_results=True):
+        """
+        Sort all localization inputs (IMU, speed, steering, wheel speeds) chronologically
+        and create a list of dictionaries with timestamps, sensor IDs, and values.
+        
+        Args:
+            print_results (bool): If True, print the sorted inputs
+            
+        Returns:
+            list: A sorted list of dictionaries with keys: 'timestamp', 'sensor_id', and 'data'
+        """
+        # Initialize empty list for sorted inputs
+        sensor_readings = []
+        
+        # Add IMU data
+        for _, row in self.imu.iterrows():
+            timestamp = float(row['time_stamp'])  # Ensure timestamp is float
+            sensor_readings.append({
+                'timestamp': timestamp,
+                'sensor_id': "IMU",
+                'data': row
+            })
+            
+        # Add speed data
+        for _, row in self.speed.iterrows():
+            timestamp = float(row['time_stamp'])
+            sensor_readings.append({
+                'timestamp': timestamp,
+                'sensor_id': "speed",
+                'data': row
+            })
+            
+        # Add steering data
+        for _, row in self.steering.iterrows():
+            timestamp = float(row['time_stamp'])
+            sensor_readings.append({
+                'timestamp': timestamp,
+                'sensor_id': "steering",
+                'data': row
+            })
+            
+        # Add left rear wheel speed if available
+        if self.left_rear_wheel_speed is not None:
+            for _, row in self.left_rear_wheel_speed.iterrows():
+                timestamp = float(row['time_stamp'])
+                sensor_readings.append({
+                    'timestamp': timestamp,
+                    'sensor_id': "left_rear_wheel_speed",
+                    'data': row
+                })
+                
+        # Add right rear wheel speed if available
+        if self.right_rear_wheel_speed is not None:
+            for _, row in self.right_rear_wheel_speed.iterrows():
+                timestamp = float(row['time_stamp'])
+                sensor_readings.append({
+                    'timestamp': timestamp,
+                    'sensor_id': "right_rear_wheel_speed",
+                    'data': row
+                })
+        
+        # Sort the list by timestamp
+        self.sorted_localization_inputs = sorted(sensor_readings, key=lambda x: x['timestamp'])
+        
+        # Also store the sorted timestamps as a list for easy indexing
+        self.sorted_timestamps = [item['timestamp'] for item in self.sorted_localization_inputs]
+                
+        print(f"Sorted {len(self.sorted_localization_inputs)} localization input samples chronologically")
+        
+        # Print all sorted inputs if requested
+        if print_results:
+            print("\nSorted localization inputs:")
+            print("==========================")
+            
+            # Track counts of each sensor type
+            sensor_counts = {
+                "IMU": 0,
+                "speed": 0,
+                "steering": 0,
+                "left_rear_wheel_speed": 0,
+                "right_rear_wheel_speed": 0
+            }
+            
+            # Print the first 10 and last 10 entries to avoid overwhelming output
+            max_to_print = min(20, len(self.sorted_localization_inputs))
+            if max_to_print < 20:  # Fixed the comparison here from <= to <
+                # If there are less than 20 entries, print them all
+                for i, entry in enumerate(self.sorted_localization_inputs):
+                    timestamp = entry['timestamp']
+                    sensor_id = entry['sensor_id']
+                    print(f"{i:4d}: t={timestamp:.6f}s - {sensor_id}")
+                    sensor_counts[sensor_id] += 1
+            else:
+                # Otherwise, print first 10 and last 10
+                print("First 10 entries:")
+                for i in range(10):
+                    entry = self.sorted_localization_inputs[i]
+                    timestamp = entry['timestamp']
+                    sensor_id = entry['sensor_id']
+                    print(f"{i:4d}: t={timestamp:.6f}s - {sensor_id}")
+                    sensor_counts[sensor_id] += 1
+                
+                print("\n... omitting middle entries ...\n")
+                
+                print("Last 10 entries:")
+                total_entries = len(self.sorted_localization_inputs)
+                for i in range(total_entries - 10, total_entries):
+                    entry = self.sorted_localization_inputs[i]
+                    timestamp = entry['timestamp']
+                    sensor_id = entry['sensor_id']
+                    print(f"{i:4d}: t={timestamp:.6f}s - {sensor_id}")
+                    sensor_counts[sensor_id] += 1
+            
+            # Reset counts before counting all entries
+            sensor_counts = {
+                "IMU": 0,
+                "speed": 0,
+                "steering": 0,
+                "left_rear_wheel_speed": 0,
+                "right_rear_wheel_speed": 0
+            }
+            
+            # Count all sensor types
+            for entry in self.sorted_localization_inputs:
+                sensor_id = entry['sensor_id']
+                if sensor_id in sensor_counts:
+                    sensor_counts[sensor_id] += 1
+            
+            # Print summary of sensor counts
+            print("\nSensor type counts:")
+            for sensor_id, count in sensor_counts.items():
+                if count > 0:
+                    print(f"  {sensor_id}: {count} samples")
+            
+            # Calculate time span
+            if len(self.sorted_timestamps) > 0:
+                start_time = self.sorted_timestamps[0]
+                end_time = self.sorted_timestamps[-1]
+                duration = end_time - start_time
+                print(f"\nTime span: {duration:.2f} seconds ({start_time:.2f}s to {end_time:.2f}s)")
+                
+                # Calculate average sample rates
+                print("\nApproximate sample rates:")
+                for sensor_id, count in sensor_counts.items():
+                    if count > 1:
+                        rate = count / duration
+                        print(f"  {sensor_id}: {rate:.1f} Hz")
+        
+        return self.sorted_localization_inputs
 
 
 class ShortTermLocalization:

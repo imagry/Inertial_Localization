@@ -36,10 +36,10 @@
 
 ##### Testing Framework
 
-| Task # | Description | Effort (days) |
-|--------|-------------|---------------|
-| B7 | Create Python test script for loading AI-driver trip data | 2 |
-| B8 | Implement synchronous sensor data processing using timestamps | 3 |
+| Task # | Description | Status | Effort (days) |
+|--------|-------------|--------|---------------|
+| B7 | Create Python test script for loading AI-driver trip data | 🔄 In Progress | 2 |
+| B8 | Implement synchronous sensor data processing using timestamps | 🔄 In Progress (synchronous loading implemented, to do: process data in algorithm and verify correctness) | 3 |
 
 ##### Documentation
 
