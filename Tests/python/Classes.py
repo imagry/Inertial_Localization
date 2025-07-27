@@ -384,14 +384,14 @@ class Trip:
         
         # Add support for left and right rear wheel speeds
         try:
-            self.left_rear_wheel_speed = pd.read_csv(join(path, 'left_rear_wheel_speed.csv'))
+            self.left_rear_wheel_speed = pd.read_csv(join(path, 'rear_left_wheel_speed.csv'))
             print("Left rear wheel speed data loaded successfully")
         except FileNotFoundError:
             self.left_rear_wheel_speed = None
             print("Warning: Left rear wheel speed data not found")
             
         try:
-            self.right_rear_wheel_speed = pd.read_csv(join(path, 'right_rear_wheel_speed.csv'))
+            self.right_rear_wheel_speed = pd.read_csv(join(path, 'rear_right_wheel_speed.csv'))
             print("Right rear wheel speed data loaded successfully")
         except FileNotFoundError:
             self.right_rear_wheel_speed = None
@@ -427,7 +427,6 @@ class Trip:
         # self.N_smooth = np.interp(self.common_time, pseudo_t, spline_x)
         # self.W_smooth = np.interp(self.common_time, pseudo_t, spline_y)
         # self.psi_smooth = np.interp(self.common_time, pseudo_t, spline_psi)
-
     def plot_lat_lon(self):
         plt.figure()
         plt.scatter(self.gps.latitude,self.gps.longitude)
@@ -608,8 +607,6 @@ class Trip:
                     if count > 1:
                         rate = count / duration
                         print(f"  {sensor_id}: {rate:.1f} Hz")
-        
-        return self.sorted_localization_inputs
 
 
 class ShortTermLocalization:
