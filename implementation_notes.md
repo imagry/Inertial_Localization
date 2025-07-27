@@ -26,7 +26,11 @@ This document consolidates the implementation notes for Tasks B5, B6, B7, and B8
   - Uses list of dictionaries structure to handle multiple sensors at same timestamp
   - Each reading contains timestamp, sensor_id, and original data
   - Includes detailed output with sensor counts and sample rates
-- 🔄 Next: Process data in localization algorithm and verify correctness
+- ✅ Fixed critical timestamp and unit conversion issues in the implementation:
+  - Added proper IMU timestamp forwarding
+  - Implemented unit conversion for gyroscope data (degrees to radians)
+  - Added tqdm progress bar for better visibility during processing
+- 🔄 Next: Initialize estimation heading from car pose and add comparison metrics with pass/fail criteria
 
 ## Task B5 & B6: Python Bindings for Localization Algorithm
 
@@ -124,6 +128,29 @@ The script implements a chronological processing system that:
 4. **Interpolation support**: Can interpolate sensor data between samples when needed
 5. **Error handling**: Gracefully handles missing data or processing errors
 
+### Implementation Challenges and Fixes (July 27, 2025)
+
+Several critical issues were discovered and resolved during testing:
+
+1. **IMU Timestamp Issues**: IMU samples weren't properly receiving timestamps
+   - Fixed by adding explicit timestamp assignment: `imu_sample.time_stamp = timestamp`
+   - Without this, the IMU data couldn't be properly synchronized with other sensors
+
+2. **Angular Units Conversion**: Gyroscope data needed conversion from degrees to radians
+   - Fixed conversion for both gyroscope readings and their bias values:
+   ```python
+   gyro_vec.x = float(data["x_gyro"]) * np.pi/180  # Convert to radians
+   gyro_vec.y = float(data["y_gyro"]) * np.pi/180  # Convert to radians
+   gyro_vec.z = float(data["z_gyro"]) * np.pi/180  # Convert to radians
+   ```
+   - Same conversion applied to gyroscope bias values
+
+3. **Progress Tracking**: Added tqdm progress bar for better visibility during processing
+   - Helps monitor processing of large datasets with potentially thousands of sensor readings
+
+4. **External Car Pose Integration**: Added support for loading and comparing with external car pose data
+   - Helps validate the localization algorithm against reference data
+
 ### Implementation Details
 
 #### Sensor Processing Pipeline
@@ -171,7 +198,10 @@ These components enable the standalone localization repository to function indep
 
 ## Next Steps
 
-1. **API Documentation**: Create more detailed documentation for API users
-2. **Additional Test Cases**: Develop more comprehensive test scenarios
-3. **Performance Optimization**: Identify and address any performance bottlenecks
-4. **Extended Sensor Support**: Add support for additional sensor types (e.g., visual odometry)
+1. **Initialize Estimation Heading**: Add functionality to initialize the estimation heading from car pose data
+2. **Comparison Metrics**: Implement quantitative comparison with external car pose data
+3. **Pass/Fail Criteria**: Define objective criteria for determining if localization results are acceptable
+4. **API Documentation**: Create more detailed documentation for API users
+5. **Additional Test Cases**: Develop more comprehensive test scenarios
+6. **Performance Optimization**: Identify and address any performance bottlenecks
+7. **Extended Sensor Support**: Add support for additional sensor types (e.g., visual odometry)

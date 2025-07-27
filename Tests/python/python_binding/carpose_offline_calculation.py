@@ -4,6 +4,7 @@ import argparse
 import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 # Add the path to import Classes module
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
@@ -98,7 +99,7 @@ def main():
     
     # Iterate through sorted sensor data and process each reading
     print("\nProcessing sensor readings chronologically...")
-    for i, reading in enumerate(trip_obj.sorted_localization_inputs):
+    for i, reading in tqdm(enumerate(trip_obj.sorted_localization_inputs), total=len(trip_obj.sorted_localization_inputs), desc="Processing sensors"):
         timestamp = reading['timestamp']
         sensor_id = reading['sensor_id']
         data = reading['data']
@@ -107,7 +108,7 @@ def main():
         if sensor_id == "IMU":
             # Create IMU sample and update the localization
             imu_sample = control_module.ImuSample()
-            
+            imu_sample.time_stamp = timestamp
             # Get acceleration data from IMU row
             # Create Vec3d objects and set their properties separately
             acc_vec = control_module.Vec3d()
@@ -128,17 +129,17 @@ def main():
             # Create gyro vector
             gyro_vec = control_module.Vec3d()
             # Use correct field names
-            gyro_vec.x = float(data["x_gyro"])
-            gyro_vec.y = float(data["y_gyro"])
-            gyro_vec.z = float(data["z_gyro"])
+            gyro_vec.x = float(data["x_gyro"]) * np.pi/180  # Convert to radians
+            gyro_vec.y = float(data["y_gyro"]) * np.pi/180  # Convert to radians
+            gyro_vec.z = float(data["z_gyro"]) * np.pi/180  # Convert to radians
             imu_sample.gyro_ = gyro_vec
             
             # Create gyro body frame vector with bias values
             gyro_b_vec = control_module.Vec3d()
             # Use bias values if available, otherwise use the same values
-            gyro_b_vec.x = float(data["x_gyro_bias"]) 
-            gyro_b_vec.y = float(data["y_gyro_bias"]) 
-            gyro_b_vec.z = float(data["z_gyro_bias"]) 
+            gyro_b_vec.x = float(data["x_gyro_bias"])  * np.pi/180  # Convert to radians
+            gyro_b_vec.y = float(data["y_gyro_bias"])  * np.pi/180  # Convert to radians
+            gyro_b_vec.z = float(data["z_gyro_bias"])  * np.pi/180  # Convert to radians
             imu_sample.gyro_b_ = gyro_b_vec
             
             # Create magnetometer vector
@@ -190,14 +191,71 @@ def main():
     print(f"Generated {len(car_pose['timestamp'])} position estimates")
     print(f"Final position estimate: x={car_pose['x'][-1]:.2f}, y={car_pose['y'][-1]:.2f}, yaw={car_pose['yaw'][-1]:.2f}")
     
+    # Define helper functions for car pose file parsing
+    def parse_car_pose_file(car_pose_file_path):
+        """Parse car pose file and return data dictionary."""
+        with open(car_pose_file_path, "r") as f:
+            lines = f.readlines()
+        data = {"x":[], "y":[], "psi":[], "timestamp":[]}
+        for line in lines[1:]:  # Skip header line
+            splited = line.split(',')
+            data["timestamp"].append(float(splited[0]))
+            data["x"].append(float(splited[1]))
+            data["y"].append(-float(splited[2]))  # Note: negating y
+            data["psi"].append(-float(splited[3]) * np.pi / 180)  # Convert to radians
+        return data
+
+    def car_pose_path(trip_path):
+        """Return path to car pose file."""
+        for file in os.listdir(trip_path):
+            if "car_pose" in file:
+                return os.path.join(trip_path, file)
+        raise FileNotFoundError(f"No car_pose file found in {trip_path}")
+
+    def continuous_angle(angles, period):
+        """Convert angles in a specific range to a sequence without boundary discontinuities."""
+        angles = np.asarray(angles)
+        
+        # Determine points where the angle jumps due to periodicity
+        jumps_up = (np.diff(angles) > 0.8 * period).astype(int)
+        jumps_down = (np.diff(angles) < -0.8 * period).astype(int)
+        jumps = jumps_up - jumps_down
+
+        # Calculate the total accumulated shift
+        steps = np.cumsum(jumps) * period
+        continuous_seq = angles.copy()
+        continuous_seq[1:] -= steps
+        
+        return continuous_seq
+        
+    # Try to load external car pose data if available
+    external_car_pose = None
+    try:
+        car_pose_file = car_pose_path(args.trip_path)
+        print(f"Found car pose file: {car_pose_file}")
+        external_car_pose = parse_car_pose_file(car_pose_file)
+    except FileNotFoundError as e:
+        print(f"Warning: {e}")
+    
     # Visualize the results if requested
     if args.visualize:
         # Create output directory if it doesn't exist
         os.makedirs(args.output_dir, exist_ok=True)
         
-        # Plot the trajectory
-        plt.figure(figsize=(10, 8))
-        plt.plot(car_pose["x"], car_pose["y"], 'b-', linewidth=2)
+        # Plot the trajectory with GPS and our localization
+        plt.figure(figsize=(12, 10))
+        if False:# plot GPS
+            plt.plot(trip_obj.N, trip_obj.E, 'g-', linewidth=2, label='GPS Track')
+        plt.plot(car_pose["x"], car_pose["y"], 'b-', linewidth=2, label='Our Localization')
+        
+        # Also plot external car pose if available
+        if external_car_pose is not None:
+            carpose_x = np.array(external_car_pose['x'])
+            carpose_y = np.array(external_car_pose['y'])
+            # Adjust starting position to match others
+            carpose_x -= carpose_x[0]
+            carpose_y -= carpose_y[0]
+            plt.plot(carpose_x, carpose_y, 'r-', linewidth=2, label='External Localization')
         plt.scatter(car_pose["x"][0], car_pose["y"][0], c='g', s=100, label='Start')
         plt.scatter(car_pose["x"][-1], car_pose["y"][-1], c='r', s=100, label='End')
         plt.grid(True)
@@ -207,12 +265,35 @@ def main():
         plt.ylabel('North (m)')
         plt.legend()
         
-        # Save the plot
+        # Save the trajectory plot
         plot_path = os.path.join(args.output_dir, 'vehicle_trajectory.png')
         plt.savefig(plot_path)
         print(f"Trajectory plot saved to {plot_path}")
         
-        # Show the plot
+        # Create a plot of the heading over time
+        plt.figure(figsize=(12, 6))
+        plt.plot(car_pose['timestamp'], np.array(car_pose['yaw']) * 180 / np.pi, 'b-', 
+                label='Our Heading')
+        
+        # Add external car pose heading if available
+        if external_car_pose is not None:
+            # Convert to degrees for plotting
+            ext_heading = np.array(external_car_pose['psi']) * 180 / np.pi
+            plt.plot(external_car_pose['timestamp'], ext_heading, 'r-', 
+                    label='External Heading')
+        
+        plt.title('Vehicle Heading')
+        plt.xlabel('Time [s]')
+        plt.ylabel('Heading [deg]')
+        plt.legend()
+        plt.grid(True)
+        
+        # Save the heading plot
+        heading_path = os.path.join(args.output_dir, 'heading_comparison.png')
+        plt.savefig(heading_path)
+        print(f"Heading plot saved to {heading_path}")
+        
+        # Show all plots
         plt.show()
     
     print("Script completed. Trip data loaded and processed.")
