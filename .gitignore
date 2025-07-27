@@ -12,6 +12,7 @@ data/reference_paths/
 old_and_unused_code/
 .idea
 cmake-bin/
+.vscode/
 
 # CMake generated files
 **/CMakeFiles/
