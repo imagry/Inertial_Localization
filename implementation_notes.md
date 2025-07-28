@@ -205,3 +205,138 @@ These components enable the standalone localization repository to function indep
 5. **Additional Test Cases**: Develop more comprehensive test scenarios
 6. **Performance Optimization**: Identify and address any performance bottlenecks
 7. **Extended Sensor Support**: Add support for additional sensor types (e.g., visual odometry)
+
+## Task B10: Code Cleanup Plan - Removing Control-Related Code
+
+### Overview
+
+This plan outlines the incremental approach for removing control-related code from the repository, focusing on the localization components. The goal is to gradually transform this into a standalone localization library without control functionality.
+
+### Testing Strategy
+
+- Establish a baseline test script (`test_localization.sh`) to verify localization functionality after each removal step
+- Define expected outputs (final position, heading) for regression testing
+- Ensure all tests pass after each removal step before proceeding
+
+### Removal Plan
+
+#### Phase 0: Create Baseline Tests
+1. **Create Test Script**
+   - Create `test_localization.sh` that builds and runs the localization tests
+   - Capture expected output from the test script as baseline
+   - Ensure the test uses the Python script to validate localization functionality
+   
+2. **Identify Test Dependencies**
+   - Map all test files referencing control components
+   - Create a plan to modify/remove test cases that depend on control code
+   - Ensure test infrastructure can validate only localization features
+
+#### Phase 1: Control API & High-Level Components
+1. **ControlAPI Class & Test References**
+   - Remove `ControlAPI.hpp` and `ControlAPI.cpp`
+   - Update `CMakeLists.txt` to remove references
+   - **Remove/Modify Test References**:
+     - Remove or comment out `TestControlAPI_init()`, `TestLQR_FromControlAPI()`, and `TestControlAPI_init2()` in `Tests/test_setup.hpp`
+     - Update `Tests/test_setup.cpp` to remove the implementations of these functions
+   - Run test script to verify localization still works
+
+2. **Controller Components & Tests**
+   - Remove `Utils/Controllers.hpp` and `Utils/Controllers.cpp` 
+   - Update `Utils/CMakeLists.txt`
+   - **Remove/Modify Test References**:
+     - Remove or comment out `TestLQRControllerSingleSample()` in `Tests/ControllerTests.hpp`
+     - Update corresponding implementation in `Tests/ControllerTests.cpp`
+   - Run test script to verify localization components still function
+
+#### Phase 2: Clean Up Integration Points
+1. **Wrapper Layer**
+   - Identify all control-related functions in `wrapper/control_api_wrapper.cpp`
+   - Create a new file `localization_api_wrapper.cpp` with only localization functions
+   - Update header file accordingly
+   - Update `wrapper/CMakeLists.txt` to build the new file
+   - Run test script to validate changes
+
+2. **Test Cases & Infrastructure**
+   - Remove all control-specific test cases from `Tests/ControllerTests.cpp`
+   - Rename the file to `Tests/LocalizationTests.cpp` if appropriate
+   - Update all references in `Tests/CMakeLists.txt` accordingly
+   - Update any `#include` directives in other test files
+   - Run test script to validate changes
+
+#### Phase 3: Configuration Refinement
+1. **Configuration Files**
+   - Analyze `vehicle_config.json` and `control_config.json`
+   - Create new `localization_config.json` with only localization parameters
+   - Update all code references that load these configurations:
+     - Update `AHRSLocHandler` initialization
+     - Update Python bindings 
+     - Update test cases
+   - Verify all paths in test scripts point to new configuration
+   - Run test script to verify configuration loading works correctly
+
+2. **Debug/Utilities**
+   - Remove control-specific debug states from `Utils/control_debug_states.cpp`
+   - Create a new `Utils/localization_debug_states.cpp` file if needed
+   - Update all references in other files:
+     - Test cases
+     - Python bindings
+     - Main application code
+   - Run test script to verify debug functionality is maintained
+
+#### Phase 4: Python Bindings Cleanup
+1. **Update Python Module**
+   - Rename `control_module.cpp` to `localization_module.cpp`
+   - Remove any remaining control-related bindings
+   - Update all Python scripts to use the renamed module
+   - Update build scripts and CMakeLists.txt
+   - Run test script to verify Python bindings still work
+
+2. **Python Test Infrastructure**
+   - Update all Python test scripts to use the new module name
+   - Remove any control-related test cases
+   - Verify visualization tools still work
+   - Run all Python tests to confirm functionality
+
+#### Phase 5: Final Cleanup and Renaming
+1. **Remaining References - Comprehensive Scan**
+   - Use `grep` to scan entire codebase for control-related terms:
+     ```bash
+     grep -r "ControlAPI\|Stanley\|PID\|Longitudinal" --include="*.cpp" --include="*.hpp" .
+     ```
+   - Address any remaining references
+   - Update all documentation to reflect localization-only focus
+   - Run test script again to verify no regressions
+
+2. **Repository Structure**
+   - Reorganize directory structure for clarity:
+     - Move localization core components to `core/` directory
+     - Move test infrastructure to organized subdirectories
+   - Update main README.md with clear focus on localization
+   - Update build system (CMakeLists.txt files) to reflect new structure
+   - Perform full clean build and run all tests
+
+### Detailed Component Analysis
+
+#### High-Level Components to Remove/Refactor
+
+| Component | File | Action | Dependencies to Check |
+|-----------|------|--------|------------------------|
+| ControlAPI | ControlAPI.hpp/cpp | Remove | Wrapper, Tests, test_setup.hpp, test_setup.cpp |
+| StanleyController | Utils/Controllers.hpp/cpp | Remove | ControlAPI, ControllerTests.hpp, ControllerTests.cpp |
+| LongitudinalController | Utils/Controllers.hpp/cpp | Remove | ControlAPI, ControllerTests.hpp, ControllerTests.cpp |
+| ControlWrapper | wrapper/control_api_wrapper.* | Refactor | Python bindings, control_module.cpp |
+| ControlTests | Tests/ControllerTests.* | Refactor/Remove | test_setup.hpp, test_setup.cpp, CMakeLists.txt |
+| Control Debug | Utils/control_debug_states.* | Remove | Utils headers, test cases |
+| Python Bindings | control_module.cpp | Refactor | carpose_offline_calculation.py, other Python scripts |
+
+#### Configuration Updates
+
+| Config Section | Purpose | Action |
+|----------------|---------|--------|
+| Control_params | Control algorithm parameters | Remove |
+| Lateral_controller | Stanley controller config | Remove |
+| Longitudinal_controller | Speed controller config | Remove |
+| Localization | AHRS and position tracking | Keep |
+| Vehicle | Vehicle dimensions and properties | Keep relevant parts |
+
+This phased approach ensures we can maintain a working localization system throughout the cleanup process, with regular testing to catch any regressions.
