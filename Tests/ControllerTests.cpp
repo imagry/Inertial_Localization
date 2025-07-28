@@ -8,13 +8,18 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include <vector>
 #include "ControllerTests.hpp"// NOLINT
 #include "Functions.hpp"// NOLINT
-#include "Controllers.hpp"// NOLINT
+// B10: Removed as part of control code removal
+// #include "Controllers.hpp"// NOLINT
 #include "units.hpp"// NOLINT
 #include "DataHandling.hpp"// NOLINT
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
 void TestLQRControllerSingleSample() {
+    // B10: Disabled as part of control code removal
+    std::cout << "TestLQRControllerSingleSample: Test disabled as part of control code removal" << std::endl;
+    return;
+    
     std::vector<PreciseMeters> traj_x{0.0, 1.0, 2.0};
     std::vector<PreciseMeters> traj_y{0.0, 0.0, 0.0};
     std::vector<PreciseRadians> traj_psi{0.0, 0.0, 0.0};
