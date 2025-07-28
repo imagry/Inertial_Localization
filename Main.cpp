@@ -4,9 +4,6 @@ Proprietary and confidential.
 Created on Thu Feb 19 2024 by Eran Vertzberger
 */
 #include <iostream>
-/* B10: Removed as part of control code removal
-#include "Tests/ControllerTests.hpp"
-*/
 #include "Utils/Functions.hpp"
 #include "Utils/Classes.hpp"
 #include "Utils/AHRS.hpp"
@@ -32,14 +29,6 @@ int main() {
     // TestRateLimiter();
     // ahrs_test();
     // TestLPF();
-    // B10: Control code removed
-    // TestControlAPI_init();  
-    // B10: Control code removed
-    // TestLQRControllerSingleSample();
-    // B10: Control code removed
-    // TestLQR_FromControlAPI();
-    // B10: Control code removed
-    // TestControlAPI_init2();
     // TestLinInterp();
     // Test2ndOrderLPF();
     // TestPathInterp();
