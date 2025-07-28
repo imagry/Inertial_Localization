@@ -19,9 +19,9 @@ DEFAULT_TRIP_PATH="/home/eranvertz/imagry/trips/NAHARIA/2025-05-21T11_52_50/"
 RESULTS_DIR="${REPO_ROOT}/results"
 
 # Expected values for regression testing (will be populated from first run)
-EXPECTED_POSE_X=0.0
-EXPECTED_POSE_Y=0.0
-EXPECTED_POSE_YAW=0.0
+EXPECTED_POSE_X=670.500340
+EXPECTED_POSE_Y=504.368338
+EXPECTED_POSE_YAW=0.778360
 
 # Flag to indicate if we should update the expected values
 UPDATE_EXPECTED=false
@@ -93,8 +93,20 @@ print_success "Build completed successfully"
 print_header "Running Localization Test"
 cd "$REPO_ROOT"
 
-# Run the test script and capture output
+# Activate the Python virtual environment
+VENV_PATH="$REPO_ROOT/Tests/python/vehicle_control_env"
+if [ ! -d "$VENV_PATH" ]; then
+    print_error "Virtual environment not found at: $VENV_PATH"
+    exit 1
+fi
+print_header "Activating Python Virtual Environment"
+source "$VENV_PATH/bin/activate"
+
+# Run the test script and capture output (without visualization)
 TEST_OUTPUT=$(python3 "$TEST_SCRIPT" --trip_path "$TRIP_PATH" --output_dir "$RESULTS_DIR" 2>&1)
+
+# Deactivate the virtual environment
+deactivate
 
 # Check if test completed successfully
 if [ $? -ne 0 ]; then

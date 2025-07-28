@@ -33,7 +33,7 @@ def main():
     parser.add_argument('--trip_path', type=str, 
                         default='/home/eranvertz/imagry/trips/NAHARIA/2025-05-21T11_52_50/',
                         help='Path to the trip data directory')
-    parser.add_argument('--visualize', action='store_true', default=True,
+    parser.add_argument('--visualize', action='store_true', default=False,
                         help='Visualize the car trajectory after processing')
     parser.add_argument('--output_dir', type=str, default='./results',
                         help='Directory to save results and plots')
@@ -234,7 +234,21 @@ def main():
     
     print("Sensor data processing completed.")
     print(f"Generated {len(car_pose['timestamp'])} position estimates")
-    print(f"Final position estimate: x={car_pose['x'][-1]:.2f}, y={car_pose['y'][-1]:.2f}, yaw={car_pose['yaw'][-1]:.2f}")
+    
+    # Format final position for both human readability and machine parsing
+    final_x = car_pose['x'][-1]
+    final_y = car_pose['y'][-1]
+    final_yaw = car_pose['yaw'][-1]
+    final_yaw_deg = final_yaw * 180 / np.pi
+    
+    print(f"Final position estimate: x={final_x:.6f}, y={final_y:.6f}, yaw={final_yaw:.6f} rad ({final_yaw_deg:.2f} deg)")
+    
+    # Output in a format that can be easily parsed by scripts
+    print("TESTOUTPUT_START")
+    print(f"final_pose_x={final_x:.6f}")
+    print(f"final_pose_y={final_y:.6f}")
+    print(f"final_pose_yaw={final_yaw:.6f}")
+    print("TESTOUTPUT_END")
     
     # Visualize the results if requested
     if args.visualize:
