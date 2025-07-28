@@ -13,8 +13,10 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 ControlDebugStates::ControlDebugStates(
     bool create_debug_dir, bool localization_mode,
     std::filesystem::path control_module_dir) {
+    /* B10: Removed as part of control code removal
     motion_planning_num_updates_ = 0;
     steering_num_updates_ = 0;
+    */
     if (create_debug_dir) {
         // if control_module_dir doesn't exist dont try saving files
         control_module_dir_exist_ = std::filesystem::exists(
@@ -44,6 +46,30 @@ ControlDebugStates::ControlDebugStates(
 }
 void ControlDebugStates::CreateDebugFiles(std::filesystem::path path,
                                           bool localization_mode) {
+    localization_debug_file_.open(path / "debug_localization.csv");
+    localization_debug_file_ << "time [sec],"
+                            << "vel [mps],"
+                            << "steering [rad],"
+                            << "x [m]"
+                            << ","
+                            << "y [m]"
+                            << ","
+                            << "psi [rad]"
+                            << "\n";  // <<t,v,delta,x,y,psi>
+    AHRS_debug_file_.open(path / "debug_AHRS.csv");
+    AHRS_debug_file_
+        << "time_IMU,"
+        << "time_OS,"
+        << "phi_hat,"
+        << "theta_hat,"
+        << "psi_hat,"
+        << "phiIMU,"
+        << "thetaIMU,"
+        << "psiIMU,"
+        << "\n";  // <<time,phi_hat,theta_hat,psi_hat>
+    std::cout << "created " << (path / "debug_AHRS.csv").string()
+                << "\n";
+    /* B10: Removed as part of control code removal
     if (localization_mode) {
         localization_debug_file_.open(path / "debug_localization.csv");
         localization_debug_file_ << "time [sec],"
@@ -87,8 +113,7 @@ void ControlDebugStates::CreateDebugFiles(std::filesystem::path path,
         std::cout << "created " << (path / "debug_steering_control.csv").string()
                 << "\n";
     }
-    longitudinal_control_debug_file_.open(
-    path / "debug_longitudinal_control.csv");
+    longitudinal_control_debug_file_.open(path / "debug_longitudinal_control.csv");
     longitudinal_control_debug_file_
         << "time [sec],"
         << "throttle_mode [bool]" << ","
@@ -137,7 +162,9 @@ void ControlDebugStates::CreateDebugFiles(std::filesystem::path path,
     std::cout << "created " << (
         path / "debug_longitudinal_control.csv").string()
             << "\n";
+    */
 }
+/* B10: Removed as part of control code removal
 void ControlDebugStates::UpdateLongitudinalStates(
     PreciseSeconds time,
     bool throttle_mode,
@@ -440,6 +467,7 @@ void ControlDebugStates::WriteControlStatesToFile(
         std::cout<< "control_module_dir_exist_ = false!!!"<< "\n";
     }
 }
+*/
 void ControlDebugStates::WriteLocalizationStatesToFile(
     PreciseSeconds clock, PreciseMps car_speed, PreciseRadians steering_angle,
     PreciseMeters vehicle_x, PreciseMeters vehicle_y,
@@ -476,6 +504,7 @@ void ControlDebugStates::WriteAHRSStatesToFile(PreciseSeconds OS_clock,
                          << "\n";
     }
 }
+/* B10: Removed as part of control code removal
 void ControlDebugStates::WritePathProcessingStatesToFile(
     PreciseSeconds clock, PreciseSeconds image_timestamp,
     const std::vector<PreciseMeters>& input_path_x,
@@ -515,6 +544,8 @@ void ControlDebugStates::WritePathProcessingStatesToFile(
         path_processing_debug_file_ << "\n";
     }
 }
+*/
+
 void ControlDebugStates::WriteToFile(std::string path) const {
     /*
     std::ofstream delta_file(path + "\\\\debug_delta.csv");
@@ -605,6 +636,7 @@ void ControlDebugStates::WriteToFile(std::string path) const {
      std::cout << "control debug states saved output to: " << path << std::endl;
      */
 }
+/* B10: Removed as part of control code removal
 void ControlDebugStates::Write_file_for_visualization(
     std::filesystem::path visualization_data_path,
     std::string updated_file) {
@@ -848,3 +880,4 @@ void ControlDebugStates::Write_file_for_visualization(
             }
     }
 }
+*/

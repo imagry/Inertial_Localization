@@ -4,7 +4,9 @@ Proprietary and confidential.
 Created on Thu Feb 19 2024 by Eran Vertzberger
 */
 #include <iostream>
+/* B10: Removed as part of control code removal
 #include "Tests/ControllerTests.hpp"
+*/
 #include "Utils/Functions.hpp"
 #include "Utils/Classes.hpp"
 #include "Utils/AHRS.hpp"

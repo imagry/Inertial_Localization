@@ -32,8 +32,8 @@
     "compensate_for_delay_before_MPC": true,
     "apply_rate_limiter_to_steering_command": true,
     "rate_limit_for_steering_command":10.0,
-    "control_modul_dir": "/opt/imagry/aidriver_new/modules/control_api/VehicleControl",
-    "visualization_data_path": "/opt/imagry/aidriver_new/modules/control_api/VehicleControl/data/temp_results/visualization_data",
+    "control_modul_dir": "/home/eranvertz/git/Inertial_Localization/",
+    "visualization_data_path": "/home/eranvertz/git/Inertial_Localization/data/temp_results/visualization_data",
     "LQR_config": {
         "lateral_error_weight": 0.01,
         "heading_error_weight": 0.05,

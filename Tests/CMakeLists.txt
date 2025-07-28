@@ -1,4 +1,4 @@
-set(TEST_SOURCES  ControllerTests.cpp test_setup.cpp)
+set(TEST_SOURCES  test_setup.cpp)
 
 include(FetchContent)
 

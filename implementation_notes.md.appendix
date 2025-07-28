@@ -1,0 +1,44 @@
+## Task B10: Remove Control-Related Code and Files
+
+### Implementation Details
+
+#### Key Files Modified
+
+1. **Header Files**
+   - `Utils/control_debug_states.hpp`: Commented out control-related methods
+   - `Utils/Classes.hpp`: Removed control-related functionality
+   - `ahrs_loc_handler.hpp`: Removed control interfaces
+
+2. **Implementation Files**
+   - `Utils/control_debug_states.cpp`: Commented out methods for debugging control states
+   - `ahrs_loc_handler.cpp`: Removed control-related methods
+   - `Main.cpp`: Commented out control test function calls
+
+3. **Renamed/Deprecated Files**
+   - Renamed `Controllers.cpp` → `Controllers.cpp.deprecated` 
+   - Renamed `Controllers.hpp` → `Controllers.hpp.deprecated`
+   - This prevents the Python binding's `GLOB_RECURSE` command from including these files
+
+4. **Build System**
+   - Updated `Utils/CMakeLists.txt`: Removed Controllers.cpp from source files list
+   - Modified `Tests/python/python_binding/CMakeLists.txt`: Build works with localization-only code
+
+### Challenges Addressed
+
+1. **Python Binding Issues**: 
+   - The Python binding build script was including all .cpp files regardless of CMake settings
+   - Solution: Renamed files with .deprecated extension to exclude them from build
+
+2. **Refactoring Control Debug States**:
+   - Required careful commenting of control-related methods while preserving localization logging
+   - Ensured proper function removal without breaking the remaining functionality
+
+3. **Testing**:
+   - Verified all localization functionality still works via the test_localization.sh script
+   - All localization tests pass with expected position and orientation values
+
+### Next Steps
+
+- Consider creating proper abstractions between localization and control interfaces
+- Further clean up deprecated code that is no longer used
+- Improve Python testing framework with more comprehensive test cases

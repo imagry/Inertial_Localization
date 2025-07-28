@@ -20,6 +20,7 @@ class ControlDebugStates {
  public:
     // Were originally C-types long int, Dor changed to int64_t
     // Perhaps can make int16 (didn't know value ranges for variables)
+    /* B10: Removed as part of control code removal
     int64_t motion_planning_num_updates_;
     int64_t steering_num_updates_;
     std::vector<PreciseSeconds> steering_update_time_;
@@ -31,24 +32,26 @@ class ControlDebugStates {
     std::vector<std::vector<PreciseRadians>> motion_planning_path_psi_;
     std::vector<std::vector<PreciseRadians>>
         motion_planning_path_psi_processed_;
+    */
     // std::vector<std::vector<PreciseMps>> vehicle_speed_;
     // std::vector<std::vector<PreciseRadians>> vehicle_heading_;
     std::vector<std::pair<PreciseMps, PreciseSeconds>>
         vehicle_speed_;  // <vehicle_heading_, time>
-    std::vector<std::pair<PreciseRadians, PreciseSeconds>>
-        heading_reference_raw_;  // <vehicle_heading_, time>
-    std::vector<std::pair<PreciseRadians, PreciseSeconds>>
-        heading_reference_filtered_;  // <vehicle_heading_, time>
+    
+    
     std::vector<std::pair<PreciseRadians, PreciseSeconds>>
         vehicle_heading_;  // <vehicle_heading_, time>
     std::vector<std::pair<std::vector<double>, double>>
         vehicle_state_;  // <<x,y,psi>, time>
+    /* B10: Removed as part of control code removal
     std::vector<std::pair<std::vector<PreciseMeters>, PreciseSeconds>>
         control_target_points_;  // <<x,y>, time>
+        */
     std::vector<std::pair<PreciseRadians, PreciseSeconds>>
         delta_;  // <steering command, time>
     std::vector<std::pair<PreciseRadians, PreciseSeconds>>
         steering_measured_;  // <steering, time>
+    /* B10: Removed as part of control code removal
     std::vector<std::pair<PreciseMeters, PreciseSeconds>>
         lateral_error_;
     std::vector<std::pair<PreciseRadians, PreciseSeconds>>
@@ -57,7 +60,8 @@ class ControlDebugStates {
         steering_wheel_command_raw_;
     std::vector<std::pair<PreciseRadians, PreciseSeconds>>
         steering_wheel_command_filtered_;
-
+        */
+    /* B10: Removed as part of control code removal
     // Longitudinal states
 
     // Modes
@@ -72,6 +76,7 @@ class ControlDebugStates {
     std::vector<std::pair<double, PreciseSeconds>> ki_brake_;
     std::vector<std::pair<double, PreciseSeconds>> kii_brake_;
     std::vector<std::pair<double, PreciseSeconds>> kd_brake_;
+    */
     // Reference velocity and velocity errors of different orders
     // NOTE: Controller's vehicle_velocity_ is updated via controller,
     // unlike vehicle_speed_, which is updated from localization obj
@@ -79,6 +84,7 @@ class ControlDebugStates {
     std::vector<std::pair<PreciseMps, PreciseSeconds>> vehicle_velocity_;
     std::vector<std::pair<PreciseMps, PreciseSeconds>>
         vehicle_velocity_filtered_;
+    /* B10: Removed as part of control code removal
     std::vector<std::pair<PreciseMps, PreciseSeconds>> reference_velocity_;
     std::vector<std::pair<PreciseMps, PreciseSeconds>>
         reference_velocity_filtered_;
@@ -110,9 +116,11 @@ class ControlDebugStates {
     std::vector<std::pair<PreciseSeconds, PreciseSeconds>>
     last_update_throttle_;
     std::vector<std::pair<PreciseSeconds, PreciseSeconds>> last_command_update_;
+    */
     std::vector<std::pair<PreciseSeconds, PreciseSeconds>> clock_;
     std::vector<std::pair<PreciseSeconds, PreciseSeconds>> dt_;
     // Raw control signals
+    /* B10: Removed as part of control code removal
     std::vector<std::pair<double, PreciseSeconds>> raw_control_throttle_;
     std::vector<std::pair<double, PreciseSeconds>> raw_control_brake_;
     // Processed control signals (rate limited etc., regardless of
@@ -123,6 +131,7 @@ class ControlDebugStates {
     // Final commands given to pedals, considering switching desicions
     std::vector<std::pair<Percentage, PreciseSeconds>> command_throttle_;
     std::vector<std::pair<Percentage, PreciseSeconds>> command_brake_;
+    */
 
     // methods
     std::mutex lock_;
@@ -130,6 +139,7 @@ class ControlDebugStates {
     ControlDebugStates(bool create_debug_dir, bool localization_mode,
                        std::filesystem::path control_module_dir);
     void WriteToFile(std::string path) const;
+    /* B10: Removed as part of control code removal
     void UpdateLongitudinalStates(
     PreciseSeconds time,
     bool throttle_mode,
@@ -235,6 +245,7 @@ class ControlDebugStates {
                                   PreciseRadians delta_i, 
                                   PreciseRadians steering_cmd_raw,// in wheel angle
                                   PreciseRadians steering_cmd_filtered);// in wheel angle
+                                  */
     void WriteLocalizationStatesToFile(PreciseSeconds clock,
                                        PreciseMps car_speed,
                                        PreciseRadians steering_angle,
@@ -250,6 +261,7 @@ class ControlDebugStates {
                                PreciseRadians thetaIMU,
                                PreciseRadians psiIMU
                                );
+    /* B10: Removed as part of control code removal
     void WritePathProcessingStatesToFile(
         PreciseSeconds clock, PreciseSeconds image_timestamp,const std::vector<PreciseMeters>& input_path_x,
         const std::vector<PreciseMeters>& input_path_y,
@@ -259,15 +271,20 @@ class ControlDebugStates {
     void Write_file_for_visualization(
         std::filesystem::path visualization_data_path,
                                       std::string updated_file);
+        */
 
  private:
     // std::ofstream delta_file_;
     // std::ofstream ef_file_;
     // std::ofstream vehicle_state_file_;
+    /* B10: Removed as part of control code removal
     std::ofstream path_processing_debug_file_;
+    */
     std::ofstream localization_debug_file_;
+    /* B10: Removed as part of control code removal
     std::ofstream longitudinal_control_debug_file_;
     std::ofstream steering_control_debug_file_;
+    */
     std::ofstream AHRS_debug_file_;
     bool control_module_dir_exist_;
     void CreateDebugFiles(std::filesystem::path path, bool localization_mode);

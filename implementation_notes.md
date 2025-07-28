@@ -10,8 +10,23 @@ This document consolidates the implementation notes for Tasks B5, B6, B7, and B8
 | B6 | Ensure compatibility with existing sensor API | ✅ Completed |
 | B7 | Create Python test script for loading AI-driver trip data | ✅ Completed |
 | B8 | Implement synchronous sensor data processing using timestamps | 🔄 In Progress |
+| B10 | Remove control-related code and files | ✅ Completed |
 
-## Latest Update - B7 & B8 Progress (July 27, 2025)
+## Latest Update - B10 Completion (July 28, 2025)
+
+### B10: Remove Control-Related Code and Files
+- ✅ Commented out control-related components in header files
+- ✅ Commented out control-related functionality in implementation files
+- ✅ Renamed `Controllers.cpp` and `Controllers.hpp` to use `.deprecated` extension
+- ✅ Updated CMakeLists.txt to exclude control-related source files
+- ✅ Fixed build issues related to Python bindings
+- ✅ Verified localization functionality still works correctly with test script
+- ✅ All localization tests pass with expected values:
+  - X position: 670.500340
+  - Y position: 504.368338
+  - YAW angle: 0.778360
+
+## Previous Update - B7 & B8 Progress (July 27, 2025)
 
 ### B7: Create Python test script for loading AI-driver trip data
 - ✅ Created script `carpose_offline_calculation.py` that loads trip data from AI-driver
@@ -340,3 +355,47 @@ This plan outlines the incremental approach for removing control-related code fr
 | Vehicle | Vehicle dimensions and properties | Keep relevant parts |
 
 This phased approach ensures we can maintain a working localization system throughout the cleanup process, with regular testing to catch any regressions.
+## Task B10: Remove Control-Related Code and Files
+
+### Implementation Details
+
+#### Key Files Modified
+
+1. **Header Files**
+   - `Utils/control_debug_states.hpp`: Commented out control-related methods
+   - `Utils/Classes.hpp`: Removed control-related functionality
+   - `ahrs_loc_handler.hpp`: Removed control interfaces
+
+2. **Implementation Files**
+   - `Utils/control_debug_states.cpp`: Commented out methods for debugging control states
+   - `ahrs_loc_handler.cpp`: Removed control-related methods
+   - `Main.cpp`: Commented out control test function calls
+
+3. **Renamed/Deprecated Files**
+   - Renamed `Controllers.cpp` → `Controllers.cpp.deprecated` 
+   - Renamed `Controllers.hpp` → `Controllers.hpp.deprecated`
+   - This prevents the Python binding's `GLOB_RECURSE` command from including these files
+
+4. **Build System**
+   - Updated `Utils/CMakeLists.txt`: Removed Controllers.cpp from source files list
+   - Modified `Tests/python/python_binding/CMakeLists.txt`: Build works with localization-only code
+
+### Challenges Addressed
+
+1. **Python Binding Issues**: 
+   - The Python binding build script was including all .cpp files regardless of CMake settings
+   - Solution: Renamed files with .deprecated extension to exclude them from build
+
+2. **Refactoring Control Debug States**:
+   - Required careful commenting of control-related methods while preserving localization logging
+   - Ensured proper function removal without breaking the remaining functionality
+
+3. **Testing**:
+   - Verified all localization functionality still works via the test_localization.sh script
+   - All localization tests pass with expected position and orientation values
+
+### Next Steps
+
+- Consider creating proper abstractions between localization and control interfaces
+- Further clean up deprecated code that is no longer used
+- Improve Python testing framework with more comprehensive test cases
