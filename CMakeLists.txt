@@ -19,8 +19,9 @@ add_subdirectory(wrapper)
 
 # add_library(ControlAPI ControlAPI.cpp)
 # target_link_libraries(ControlAPI PUBLIC Utils)
+# B10: Removed ControlAPI from build
 add_library(ControlAPI
-    ControlAPI.cpp
+    # ControlAPI.cpp - Removed as part of B10 task
     ahrs_loc_handler.cpp
 )
 target_link_libraries(ControlAPI PUBLIC Utils nlohmann_json::nlohmann_json)

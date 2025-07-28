@@ -16,9 +16,10 @@ void TestProject2dPoints();
 void TestTimeTypes();
 void TestBuffer();
 void TestBufferTemplate();
-void TestControlAPI_init();
-void TestLQR_FromControlAPI();
-void TestControlAPI_init2();
+// Removed as part of B10 task (Control code removal)
+// void TestControlAPI_init();
+// void TestLQR_FromControlAPI();
+// void TestControlAPI_init2();
 void TestDelay();
 void TestDelayTemplate();
 void TestTemplateClass();

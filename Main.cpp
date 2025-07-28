@@ -30,9 +30,13 @@ int main() {
     // TestRateLimiter();
     // ahrs_test();
     // TestLPF();
-    // TestControlAPI_init();
+    // B10: Control code removed
+    // TestControlAPI_init();  
+    // B10: Control code removed
     // TestLQRControllerSingleSample();
+    // B10: Control code removed
     // TestLQR_FromControlAPI();
+    // B10: Control code removed
     // TestControlAPI_init2();
     // TestLinInterp();
     // Test2ndOrderLPF();

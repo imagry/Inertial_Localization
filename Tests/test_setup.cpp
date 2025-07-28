@@ -19,7 +19,8 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "../Utils/Classes.hpp"// NOLINT
 #include "../Utils/DataHandling.hpp"// NOLINT
 #include "../Utils/short_term_localization.hpp"// NOLINT
-#include "../ControlAPI.hpp"// NOLINT
+// B10: Removed as part of control code removal
+// #include "../ControlAPI.hpp"// NOLINT
 #include "../wrapper/control_api_wrapper.h"// NOLINT
 
 // using namespace Eigen;
@@ -395,6 +396,8 @@ void TestTimeTypes() {
     std::cout << "t0 = " << std::put_time(std::localtime(&t0), "%F %T.\n")
               << std::flush;
 }
+// Removed as part of B10 task (Control code removal)
+/*
 void TestControlAPI_init() {
     ControlAPI control_api = ControlAPI(std::string("../vehicle_config.json"),
                                         std::string("../control_config.json"));
@@ -431,8 +434,8 @@ void TestLQR_FromControlAPI() {
     std::cout << "delta:\n" << control_api->GetDelta() << std::endl;
     std::chrono::duration<double> elapsed = end - start;
     std::cout << "Elapsed time: " << elapsed.count() << " seconds" << std::endl;
-
 }
+*/
 void TestBuffer() {
     Buffer_any bf = Buffer_any(5);
     bf.Update(static_cast<double>(0));
