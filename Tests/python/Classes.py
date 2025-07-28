@@ -6,7 +6,7 @@ import Functions
 from Functions import fold_angles, epsilon_limit
 from os.path import join
 import pandas as pd
-import CurvesGenerator.cubic_spline as cs
+# import CurvesGenerator.cubic_spline as cs
 
 class VehicleKinemaicModel:
     

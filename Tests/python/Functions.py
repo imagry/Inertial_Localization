@@ -4,7 +4,7 @@ import math
 import matplotlib.pyplot as plt
 import pandas as pd
 from sys import platform
-import CurvesGenerator.cubic_spline as cs
+# import CurvesGenerator.cubic_spline as cs
 from multipledispatch import dispatch
 import json
 EPSILON = 1e-6
@@ -128,7 +128,7 @@ def fold_angles(u):
             if y[i] < -np.pi:
                 y[i] = y[i] + 2 * np.pi
     return y.squeeze()
-def calc_desired_path(scenario, ds=0.1, traj_noise=None, plot_results=False):
+# def calc_desired_path(scenario, ds=0.1, traj_noise=None, plot_results=False):
     # generate path
     if scenario == 'sin':
         x_range = 250.0
