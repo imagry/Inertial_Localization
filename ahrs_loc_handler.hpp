@@ -21,7 +21,7 @@ class AHRSLocHandler {
     public:
     AHRSLocHandler(const json& vehicle_config, const json& control_config);
     AHRSLocHandler(const std::string& vehicle_config_path = "vehicle_config.json",
-                        const std::string& control_config_path = "control_config.json");
+                        const std::string& control_config_path = "localization_config.json");
     const ShortTermLocalization& GetLoc() const { return localization_obj_; }
     const Delay<std::vector<double>>& GetDelay() const { return localization_delay_obj_; }
     bool UpdatePosition(PreciseSeconds clock);
