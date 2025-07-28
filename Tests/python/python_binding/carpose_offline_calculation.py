@@ -5,11 +5,12 @@ import numpy as np
 from pathlib import Path
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from scipy.spatial.transform import Rotation
 
 # Add the path to import Classes module
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 import Classes
-
+import Functions
 # Add the path to import control_module (Python bindings)
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'build'))
 try:
@@ -32,7 +33,7 @@ def main():
     parser.add_argument('--trip_path', type=str, 
                         default='/home/eranvertz/imagry/trips/NAHARIA/2025-05-21T11_52_50/',
                         help='Path to the trip data directory')
-    parser.add_argument('--visualize', action='store_true',
+    parser.add_argument('--visualize', action='store_true', default=True,
                         help='Visualize the car trajectory after processing')
     parser.add_argument('--output_dir', type=str, default='./results',
                         help='Directory to save results and plots')
@@ -51,7 +52,51 @@ def main():
     
     # Sort localization inputs chronologically
     trip_obj.sort_localization_inputs(print_results=True)
+    # Define helper functions for car pose file parsing
+    def parse_car_pose_file(car_pose_file_path):
+        """Parse car pose file and return data dictionary."""
+        with open(car_pose_file_path, "r") as f:
+            lines = f.readlines()
+        data = {"x":[], "y":[], "psi":[], "timestamp":[]}
+        for line in lines[1:]:  # Skip header line
+            splited = line.split(',')
+            data["timestamp"].append(float(splited[0]))
+            data["x"].append(float(splited[1]))
+            data["y"].append(-float(splited[2]))  # Note: negating y
+            data["psi"].append(-float(splited[3]) * np.pi / 180)  # Convert to radians
+        return data
+
+    def car_pose_path(trip_path):
+        """Return path to car pose file."""
+        for file in os.listdir(trip_path):
+            if "car_pose" in file:
+                return os.path.join(trip_path, file)
+        raise FileNotFoundError(f"No car_pose file found in {trip_path}")
     
+    # Try to load external car pose data if available
+    external_car_pose = None
+    try:
+        car_pose_file = car_pose_path(args.trip_path)
+        print(f"Found car pose file: {car_pose_file}")
+        external_car_pose = parse_car_pose_file(car_pose_file)
+    except FileNotFoundError as e:
+        print(f"Warning: {e}")
+    # zero the initial carpose heading 
+    carpose_psi0 = external_car_pose["psi"][0]
+    def rotate_trajectory(pts, angle):
+        assert pts.shape[1] == 3, "path must be arranged as column (each point X,Y,psi is a row)"
+        rot = Rotation.from_euler('ZYX', [angle, 0, 0], degrees=False).as_matrix()  # 3 X 3
+        rot = rot[0:2, 0:2]
+        rot_traj = pts[:, :2] @ rot.T  # N*2 = N*2 @ 2*2
+        rot_headings = pts[:, 2] + angle
+        rot_traj = np.hstack((rot_traj, rot_headings[:, np.newaxis]))  # N*2 + N*1
+        return rot_traj
+    carpose_path = np.array([external_car_pose["x"], external_car_pose["y"], external_car_pose["psi"]]).T
+    carpose_path_rot = rotate_trajectory(carpose_path, -carpose_psi0)
+    
+    external_car_pose["x"] = (carpose_path_rot[:, 0] - carpose_path_rot[0, 0]).tolist()
+    external_car_pose["y"] = (carpose_path_rot[:, 1] - carpose_path_rot[0, 1]).tolist()
+    external_car_pose["psi"] = Functions.continuous_angle(carpose_path_rot[:, 2]).tolist()
     # Set up configuration files for the localization module
     def get_config_paths():
         """Get the absolute paths to the configuration files."""
@@ -83,7 +128,7 @@ def main():
     
     # Initialize vehicle state (position at origin, zero heading)
     initial_time = 0.0  # Start at time 0
-    initial_state = [0.0, 0.0, 0.0, 0.0]  # [x, y, heading, velocity]
+    initial_state = [0.0, 0.0, external_car_pose["psi"][0], 0.0]  # [x, y, heading, velocity]
     loc_handler.ResetVehicleState(initial_time, initial_state)
     
     # Prepare for tracking estimated car pose
@@ -94,7 +139,7 @@ def main():
         "yaw": []
     }
     
-    print("Initial vehicle state reset to origin (0,0,0)")
+    print(f"Initial vehicle state reset to origin (0,0,{external_car_pose['psi'][0]:.4f})")
     print("Starting to process sensor readings...")
     
     # Iterate through sorted sensor data and process each reading
@@ -191,107 +236,95 @@ def main():
     print(f"Generated {len(car_pose['timestamp'])} position estimates")
     print(f"Final position estimate: x={car_pose['x'][-1]:.2f}, y={car_pose['y'][-1]:.2f}, yaw={car_pose['yaw'][-1]:.2f}")
     
-    # Define helper functions for car pose file parsing
-    def parse_car_pose_file(car_pose_file_path):
-        """Parse car pose file and return data dictionary."""
-        with open(car_pose_file_path, "r") as f:
-            lines = f.readlines()
-        data = {"x":[], "y":[], "psi":[], "timestamp":[]}
-        for line in lines[1:]:  # Skip header line
-            splited = line.split(',')
-            data["timestamp"].append(float(splited[0]))
-            data["x"].append(float(splited[1]))
-            data["y"].append(-float(splited[2]))  # Note: negating y
-            data["psi"].append(-float(splited[3]) * np.pi / 180)  # Convert to radians
-        return data
-
-    def car_pose_path(trip_path):
-        """Return path to car pose file."""
-        for file in os.listdir(trip_path):
-            if "car_pose" in file:
-                return os.path.join(trip_path, file)
-        raise FileNotFoundError(f"No car_pose file found in {trip_path}")
-
-    def continuous_angle(angles, period):
-        """Convert angles in a specific range to a sequence without boundary discontinuities."""
-        angles = np.asarray(angles)
-        
-        # Determine points where the angle jumps due to periodicity
-        jumps_up = (np.diff(angles) > 0.8 * period).astype(int)
-        jumps_down = (np.diff(angles) < -0.8 * period).astype(int)
-        jumps = jumps_up - jumps_down
-
-        # Calculate the total accumulated shift
-        steps = np.cumsum(jumps) * period
-        continuous_seq = angles.copy()
-        continuous_seq[1:] -= steps
-        
-        return continuous_seq
-        
-    # Try to load external car pose data if available
-    external_car_pose = None
-    try:
-        car_pose_file = car_pose_path(args.trip_path)
-        print(f"Found car pose file: {car_pose_file}")
-        external_car_pose = parse_car_pose_file(car_pose_file)
-    except FileNotFoundError as e:
-        print(f"Warning: {e}")
-    
     # Visualize the results if requested
     if args.visualize:
         # Create output directory if it doesn't exist
         os.makedirs(args.output_dir, exist_ok=True)
         
-        # Plot the trajectory with GPS and our localization
-        plt.figure(figsize=(12, 10))
-        if False:# plot GPS
-            plt.plot(trip_obj.N, trip_obj.E, 'g-', linewidth=2, label='GPS Track')
-        plt.plot(car_pose["x"], car_pose["y"], 'b-', linewidth=2, label='Our Localization')
+        # Create a figure with two columns of subplots
+        fig = plt.figure(figsize=(18, 12))
+        
+        # Define the grid layout: 2 columns, 3 rows for right column
+        gs = fig.add_gridspec(3, 2, width_ratios=[1, 1])
+        
+        # Left column - Trajectory plot (occupying all vertical space)
+        ax_traj = fig.add_subplot(gs[:, 0])
+        
+        # Plot the trajectory
+        if False:  # plot GPS
+            ax_traj.plot(trip_obj.N, trip_obj.E, 'g-', linewidth=2, label='GPS Track')
+        ax_traj.plot(car_pose["x"], car_pose["y"], 'b-', linewidth=2, label='Our Localization')
         
         # Also plot external car pose if available
         if external_car_pose is not None:
             carpose_x = np.array(external_car_pose['x'])
             carpose_y = np.array(external_car_pose['y'])
-            # Adjust starting position to match others
-            carpose_x -= carpose_x[0]
-            carpose_y -= carpose_y[0]
-            plt.plot(carpose_x, carpose_y, 'r-', linewidth=2, label='External Localization')
-        plt.scatter(car_pose["x"][0], car_pose["y"][0], c='g', s=100, label='Start')
-        plt.scatter(car_pose["x"][-1], car_pose["y"][-1], c='r', s=100, label='End')
-        plt.grid(True)
-        plt.axis('equal')
-        plt.title('Vehicle Trajectory')
-        plt.xlabel('East (m)')
-        plt.ylabel('North (m)')
-        plt.legend()
+            ax_traj.plot(carpose_x, carpose_y, 'r-', linewidth=2, label='External Localization')
         
-        # Save the trajectory plot
-        plot_path = os.path.join(args.output_dir, 'vehicle_trajectory.png')
-        plt.savefig(plot_path)
-        print(f"Trajectory plot saved to {plot_path}")
+        ax_traj.scatter(car_pose["x"][0], car_pose["y"][0], c='g', s=100, label='Start')
+        ax_traj.scatter(car_pose["x"][-1], car_pose["y"][-1], c='r', s=100, label='End')
+        ax_traj.grid(True)
+        ax_traj.set_aspect('equal')
+        ax_traj.set_title('Vehicle Trajectory', fontsize=14)
+        ax_traj.set_xlabel('East (m)', fontsize=12)
+        ax_traj.set_ylabel('North (m)', fontsize=12)
+        ax_traj.legend(loc='best', fontsize=12)
         
-        # Create a plot of the heading over time
-        plt.figure(figsize=(12, 6))
-        plt.plot(car_pose['timestamp'], np.array(car_pose['yaw']) * 180 / np.pi, 'b-', 
-                label='Our Heading')
+        # Right column, top plot - Heading comparison
+        ax_heading = fig.add_subplot(gs[0, 1])
+        ax_heading.plot(car_pose['timestamp'], np.array(car_pose['yaw']) * 180 / np.pi, 'b-', 
+                        linewidth=2, label='Our Heading')
         
         # Add external car pose heading if available
         if external_car_pose is not None:
             # Convert to degrees for plotting
             ext_heading = np.array(external_car_pose['psi']) * 180 / np.pi
-            plt.plot(external_car_pose['timestamp'], ext_heading, 'r-', 
-                    label='External Heading')
+            ax_heading.plot(external_car_pose['timestamp'], ext_heading, 'r-', 
+                           linewidth=2, label='External Heading')
         
-        plt.title('Vehicle Heading')
-        plt.xlabel('Time [s]')
-        plt.ylabel('Heading [deg]')
-        plt.legend()
-        plt.grid(True)
+        ax_heading.set_title('Vehicle Heading Comparison', fontsize=14)
+        ax_heading.set_xlabel('Time (s)', fontsize=12)
+        ax_heading.set_ylabel('Heading (deg)', fontsize=12)
+        ax_heading.grid(True)
+        ax_heading.legend(loc='best', fontsize=12)
         
-        # Save the heading plot
-        heading_path = os.path.join(args.output_dir, 'heading_comparison.png')
-        plt.savefig(heading_path)
-        print(f"Heading plot saved to {heading_path}")
+        # Right column, middle plot - X position comparison
+        ax_x = fig.add_subplot(gs[1, 1], sharex=ax_heading)
+        ax_x.plot(car_pose['timestamp'], car_pose['x'], 'b-', 
+                  linewidth=2, label='Our X')
+        
+        if external_car_pose is not None:
+            ax_x.plot(external_car_pose['timestamp'], external_car_pose['x'], 'r-', 
+                     linewidth=2, label='External X')
+        
+        ax_x.set_title('X Position Comparison', fontsize=14)
+        ax_x.set_xlabel('Time (s)', fontsize=12)
+        ax_x.set_ylabel('X Position (m)', fontsize=12)
+        ax_x.grid(True)
+        ax_x.legend(loc='best', fontsize=12)
+        
+        # Right column, bottom plot - Y position comparison
+        ax_y = fig.add_subplot(gs[2, 1], sharex=ax_heading)
+        ax_y.plot(car_pose['timestamp'], car_pose['y'], 'b-', 
+                  linewidth=2, label='Our Y')
+        
+        if external_car_pose is not None:
+            ax_y.plot(external_car_pose['timestamp'], external_car_pose['y'], 'r-', 
+                     linewidth=2, label='External Y')
+        
+        ax_y.set_title('Y Position Comparison', fontsize=14)
+        ax_y.set_xlabel('Time (s)', fontsize=12)
+        ax_y.set_ylabel('Y Position (m)', fontsize=12)
+        ax_y.grid(True)
+        ax_y.legend(loc='best', fontsize=12)
+        
+        # Adjust layout for better spacing
+        plt.tight_layout()
+        
+        # Save the combined plots
+        combined_plot_path = os.path.join(args.output_dir, 'combined_comparison.png')
+        fig.savefig(combined_plot_path, dpi=150, bbox_inches='tight')
+        print(f"Combined comparison plots saved to {combined_plot_path}")
         
         # Show all plots
         plt.show()
