@@ -80,10 +80,8 @@ mkdir -p "$RESULTS_DIR"
 
 # Step 1: Build the project
 print_header "Building Project"
-mkdir -p "$BUILD_DIR"
-cd "$BUILD_DIR"
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make -j$(nproc)
+cd "$REPO_ROOT/Tests/python/python_binding"
+./rebuild.sh
 
 if [ $? -ne 0 ]; then
     print_error "Build failed"
