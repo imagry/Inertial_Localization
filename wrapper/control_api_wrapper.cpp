@@ -17,12 +17,6 @@ using json = nlohmann::json;
 
 namespace aidriver::control_api {
 
-// B10: Removed as part of control code removal
-// static std::shared_ptr<ControlAPI> CreateControlAPIInstance(
-//     const std::map<std::string, std::string>& external_config,
-//     const std::string& vehicle_config_path,
-//     const std::string& control_config_path);
-
 static std::shared_ptr<AHRSLocHandler> CreateAHRSLocHandlerInstance(
     const std::map<std::string, std::string>& external_config,
     const std::string& vehicle_config_path,
@@ -99,35 +93,6 @@ static json merged_configs(
     }
     return config;
 }
-
-// B10: Removed as part of control code removal
-// std::shared_ptr<ControlAPI> GetControlAPIInstance(
-//     const std::map<std::string, std::string>& external_config,
-//     const std::string& vehicle_config_path,
-//     const std::string& control_config_path) {
-//     static std::shared_ptr<ControlAPI> control_api_instance =
-//         CreateControlAPIInstance(external_config, vehicle_config_path, control_config_path);
-// 
-//     return control_api_instance;
-// }
-
-// B10: Removed as part of control code removal
-// std::shared_ptr<ControlAPI> CreateControlAPIInstance(
-//     const std::map<std::string, std::string>& external_config,
-//     const std::string& vehicle_config_path,
-//     const std::string& control_config_path) {
-//     json vehicle_config = merged_configs(external_config, vehicle_config_path);
-//     // json control_config(json::parse(std::ifstream(control_config_path)));
-//     json control_config = merged_configs(external_config, control_config_path);
-//     std::cout << "===== control_api is created with the following configs =====" << std::endl;
-//     std::cout << "control_config: " << control_config << std::endl;
-//     std::cout << "vehicle_config: " << vehicle_config << std::endl;
-//     return std::make_shared<ControlAPI>(
-//         vehicle_config, control_config);
-// }
-
-// std::map<std::string, std::string>
-
 
 std::shared_ptr<AHRSLocHandler> GetAHRSLocHandlerInstance(
     const std::map<std::string, std::string>& external_config,

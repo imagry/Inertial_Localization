@@ -121,15 +121,9 @@ void AHRSLocHandler::UpdateIMU(const ImuSample& sample, PreciseSeconds clock) {
             sample.roll_, sample.pitch_, sample.yaw_);
     }
     UpdatePosition(clock);//OS clock
-    // TODO(Dor): Shouldn't use IMU sample as is.
-    // TODO(Dor): acc_x = acc_[0]
-    // Need to change estimator side too.
     if (speed_estimator_) {
         speed_estimator_->UpdateIMU(&sample);
     }
-    // std::cout << "UPDATING IMU SAMPLE: " << sample.acc_.x << "\n";
-    // std::cout << "IMU SAMPLE WITHOUT G: " <<
-    //    sample.acc_.x - AHRS_obj_.gb[0] << "\n";
 }
 void AHRSLocHandler::UpdateRearRightSpeed(
     PreciseMps rear_right_speed,
@@ -239,13 +233,6 @@ bool AHRSLocHandler::UpdatePosition(PreciseSeconds clock) {
                 clock, state.speed_, state.delta_, state.pos_[0],
                 state.pos_[1], state.psi_);
         }
-        /* B10: Removed as part of control code removal
-        if (control_config_["online_visualization"]) {
-        debug_obj_.Write_file_for_visualization(
-        std::filesystem::path(control_config_["visualization_data_path"]),
-                              "localization");
-        }
-        */
         return true;
     } else {
         return false;
