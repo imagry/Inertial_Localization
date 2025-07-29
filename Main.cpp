@@ -10,28 +10,5 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "Tests/test_setup.hpp"
 
 int main() {
-    // TestReadCSV();
-    // TestShortTermLocalization();
-    // TestEigen();
-    // TestNlohman();
-    // TestPlotInputs();
-    // TestSplines3();
-    // ApiTest();
-    // ApiTest2();
-    // TestStanleyControllerSingleSample();
-    // TestAffineTransformation();
-    // TestProject2dPoints();
-    // TestTimeTypes();
-    // TestBuffer();
-    // TestDelay();
-    // TestBufferTemplate();
-    // TestDelayTemplate();
-    // TestRateLimiter();
-    // ahrs_test();
-    // TestLPF();
-    // TestLinInterp();
-    // Test2ndOrderLPF();
-    // TestPathInterp();
-    Test_function_convert_path_control_points();
     return 0;
 }

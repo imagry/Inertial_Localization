@@ -19,8 +19,6 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "../Utils/Classes.hpp"// NOLINT
 #include "../Utils/DataHandling.hpp"// NOLINT
 #include "../Utils/short_term_localization.hpp"// NOLINT
-// B10: Removed as part of control code removal
-// #include "../ControlAPI.hpp"// NOLINT
 #include "../wrapper/control_api_wrapper.h"// NOLINT
 
 // using namespace Eigen;
@@ -396,46 +394,6 @@ void TestTimeTypes() {
     std::cout << "t0 = " << std::put_time(std::localtime(&t0), "%F %T.\n")
               << std::flush;
 }
-// Removed as part of B10 task (Control code removal)
-/*
-void TestControlAPI_init() {
-    ControlAPI control_api = ControlAPI(std::string("../vehicle_config.json"),
-                                        std::string("../control_config.json"));
-    std::cout << "control_api initialized" << std::endl;
-}
-void TestControlAPI_init2(){
-    std::shared_ptr<ControlAPI> control_api = aidriver::control_api::GetControlAPIInstance(std::map<std::string, std::string>(), 
-                                                                                "../vehicle_config.json",
-                                                                                "../control_config.json");
-    std::cout << "control_api initialized" << std::endl;                               
-}
-void TestLQR_FromControlAPI() {
-    std::shared_ptr<ControlAPI> control_api = aidriver::control_api::GetControlAPIInstance(std::map<std::string, std::string>(), 
-                                                                                "../vehicle_config.json",
-                                                                                "../control_config.json");
-    
-    auto localization_handler_obj = aidriver::control_api::GetAHRSLocHandlerInstance(std::map<std::string, std::string>(), std::string("../vehicle_config.json"),
-                                                                                        std::string("../control_config.json"));
-    PreciseMeters x_v = 0.0;
-    PreciseMeters y_v = 1.0;
-    PreciseRadians psi_v = 0.0;
-    PreciseMps vel = 10 / 3.6;
-    PreciseSeconds sys_clock = 0.0;
-    PreciseRadians steering_wheel_angle = 0.0;
-    localization_handler_obj->ResetVehicleState(sys_clock, {x_v, y_v, psi_v, vel});
-    localization_handler_obj->UpdateSteeringWheel(steering_wheel_angle,sys_clock);
-    std::vector<PreciseMeters> traj_x{0.0, 1.0, 2.0, 3.0, 4.0};
-    std::vector<PreciseMeters> traj_y{0.0, 0.0, 0.0, 0.0, 0.0};
-    control_api->MotionPlanningUpdate(traj_x, traj_y, sys_clock, string("NAV"), sys_clock);
-    auto start = std::chrono::high_resolution_clock::now();
-    control_api->CalculateSteeringCommand(sys_clock);
-    auto end = std::chrono::high_resolution_clock::now();
-    // Print steering command
-    std::cout << "delta:\n" << control_api->GetDelta() << std::endl;
-    std::chrono::duration<double> elapsed = end - start;
-    std::cout << "Elapsed time: " << elapsed.count() << " seconds" << std::endl;
-}
-*/
 void TestBuffer() {
     Buffer_any bf = Buffer_any(5);
     bf.Update(static_cast<double>(0));
@@ -536,52 +494,7 @@ PreciseMeters CalculatePathLength(std::vector<double> planner_waypoints_x,
     };
     return path_len_;
 }
-void TestPathInterp(){
-    std::vector<double> input_x = {0, 0.100472, 0.201123, 0.301777, 0.402434, 0.503093, 0.603753, 0.704416, 0.80508, 0.905746, 1.00641, 1.10708, 1.20775, 1.30842, 1.40909, 1.50976, 1.61044, 1.71111, 1.81178, 1.91246, 2.01313, 2.11381, 2.21448, 2.31516, 2.41583, 2.51651, 2.61718, 2.71786, 2.81854, 2.91921, 3.01989, 3.12056, 3.22124, 3.32191, 3.42259, 3.52326, 3.62393, 3.72461, 3.82528, 3.92596, 4.02663, 4.1273, 4.22797, 4.32865, 4.42932, 4.52999, 4.63066, 4.73133, 4.832, 4.93267, 5.03334, 5.13401, 5.23468, 5.33534, 5.43601};
-    std::vector<double> input_y = {0, -0.00692822, -0.00697963, -0.00711737, -0.00733921, -0.00764289, -0.00802614, -0.00848677, -0.0090229, -0.00963238, -0.0103132, -0.0110635, -0.0118815, -0.0127652, -0.013713, -0.0147231, -0.0157939, -0.0169238, -0.018111, -0.0193542, -0.0206517, -0.0220022, -0.0234042, -0.0248562, -0.0263571, -0.0279055, -0.0295, -0.0311396, -0.0328229, -0.0345488, -0.0363161, -0.0381238, -0.0399707, -0.0418558, -0.043778, -0.0457365, -0.0477301, -0.049758, -0.0518192, -0.0539128, -0.056038, -0.0581939, -0.0603796, -0.0625945, -0.0648377, -0.0671084, -0.069406, -0.0717296, -0.0740786, -0.0764523, -0.0788501, -0.0812713, -0.0837152, -0.0861813, -0.0886689};
-    const int kN = 10; // number of interpolation points
-    double speed_for_optimization_ = 5.0; // m/s
-    PreciseSeconds kDt = 0.25;
-    PreciseMeters pred_path_len = speed_for_optimization_ * kDt * kN;
-    PreciseMeters path_len_ = CalculatePathLength(input_x, input_y);
-    PreciseSeconds dt_for_optimization_ = kDt;
-    if (pred_path_len >= path_len_) {
-        std::cout << "path_len_ = " << path_len_ << ", pred_path_len = " << pred_path_len << std::endl;
-        pred_path_len = path_len_;
-        dt_for_optimization_ = pred_path_len / speed_for_optimization_ / kN;
-    }
-    std::vector<PreciseMeters> s_interp(kN + 1, 0.0);
-    if (false){ 
-        s_interp = {0, 0.543701, 1.0874, 1.6311, 2.1748, 2.7185, 3.26221, 3.80591, 4.34961, 4.89331, 5.43701};
-    } else{
-        double ds = speed_for_optimization_ * dt_for_optimization_;
-        std::cout << "ds = " << ds << std::endl;
-        std::cout << "dt_for_optimization_ = " << dt_for_optimization_ << std::endl;
-        for (int i = 0; i <= kN; i++){
-            s_interp[i] = i * ds;
-        }
-        s_interp.back() = s_interp.back() + 5e-7;
-    }
-    std::cout << "s_interp values:\n";
-    for (const auto& val : s_interp) {
-        std::cout << val << " ";
-    }
-    std::cout << std::endl;
-    auto [x_interp, y_interp, success] = LinearPathInterpulation(input_x, input_y, s_interp);
-    if (!success) {
-        std::cerr << "[warning] TestPathinterp: Interpolation failed.\n";
-        return;
-    }
-    std::cout << "Interpolated x values:\n";
-    for (const auto& val : x_interp) {
-        std::cout << val << " ";
-    }
-    std::cout << "\nInterpolated y values:\n";
-    for (const auto& val : y_interp) {
-        std::cout << val << " ";
-    }
-}
-void Test_function_convert_path_control_points(){
+
     // 1. Read path from CSV
     std::string input_csv_path = "../data/temp_results/example_path.csv"; // <-- set your path here
     auto csv_data = ReadCSV(input_csv_path);

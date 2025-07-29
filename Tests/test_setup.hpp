@@ -16,10 +16,6 @@ void TestProject2dPoints();
 void TestTimeTypes();
 void TestBuffer();
 void TestBufferTemplate();
-// Removed as part of B10 task (Control code removal)
-// void TestControlAPI_init();
-// void TestLQR_FromControlAPI();
-// void TestControlAPI_init2();
 void TestDelay();
 void TestDelayTemplate();
 void TestTemplateClass();
@@ -27,5 +23,4 @@ void TestRateLimiter();
 void Test2ndOrderLPF();
 void TestLPF();
 void TestLinInterp();
-void TestPathInterp();
-void Test_function_convert_path_control_points();
+
