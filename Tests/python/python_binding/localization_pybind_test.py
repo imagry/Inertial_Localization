@@ -56,7 +56,7 @@ def test_init():
         return False
     
     if not os.path.exists(control_config_path):
-        print(f"Error: control_config.json not found at {control_config_path}")
+        print(f"Error: localization_config.json not found at {control_config_path}")
         return False
     
     print(f"Config files found at:")
@@ -76,7 +76,7 @@ def get_config_paths():
     """Get the absolute paths to the configuration files."""
     repo_root = os.path.abspath(os.path.join(script_dir, "../../../"))
     vehicle_config_path = os.path.join(repo_root, "vehicle_config.json")
-    control_config_path = os.path.join(repo_root, "control_config.json")
+    control_config_path = os.path.join(repo_root, "localization_config.json")
     return vehicle_config_path, control_config_path
 
 def test_update_imu():

@@ -15,7 +15,7 @@ namespace aidriver::control_api {
 static const auto kVehiclConfigPath =
     std::string("modules/control_api/VehicleControl/vehicle_config.json");
 static const auto kControlConfigPath =
-    std::string("modules/control_api/VehicleControl/control_config.json");
+    std::string("modules/control_api/VehicleControl/localization_config.json");
 
 std::shared_ptr<AHRSLocHandler> GetAHRSLocHandlerInstance(
     const std::map<std::string, std::string>& external_config =
@@ -26,6 +26,6 @@ std::shared_ptr<AHRSLocHandler> GetAHRSLocHandlerInstance(
 std::shared_ptr<AHRSLocHandler> GetAHRSLocHandlerInstance(
     const std::map<std::string, std::string>& external_config,
     const json& vehicle_config,
-    const json& control_config);
+    const json& localization_config);
 
 }  // namespace aidriver::control_api

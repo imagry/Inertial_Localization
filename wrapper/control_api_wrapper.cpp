@@ -99,9 +99,9 @@ std::shared_ptr<AHRSLocHandler> GetAHRSLocHandlerInstance(
     const std::string& vehicle_config_path,
     const std::string& control_config_path) {
     json vehicle_config = merged_configs(external_config, vehicle_config_path);
-    json control_config = merged_configs(external_config, control_config_path);
+    json localization_config = merged_configs(external_config, control_config_path);
     std::shared_ptr<AHRSLocHandler> ahrs_handler_instance = 
-        GetAHRSLocHandlerInstance(external_config, vehicle_config, control_config);
+        GetAHRSLocHandlerInstance(external_config, vehicle_config, localization_config);
     return ahrs_handler_instance;
 }
 
@@ -110,13 +110,13 @@ std::shared_ptr<AHRSLocHandler> CreateAHRSLocHandlerInstance(
     const std::string& vehicle_config_path,
     const std::string& control_config_path) {
     json vehicle_config = merged_configs(external_config, vehicle_config_path);
-    json control_config = merged_configs(external_config, control_config_path);
-    // json control_config(json::parse(std::ifstream(control_config_path)));
+    json localization_config = merged_configs(external_config, control_config_path);
+    // json localization_config(json::parse(std::ifstream(control_config_path)));
     std::cout << "===== localization handler is created with the following path configs =====" << std::endl;
-    std::cout << "control_config: " << control_config << std::endl;
+    std::cout << "localization_config: " << localization_config << std::endl;
     std::cout << "vehicle_config: " << vehicle_config << std::endl;
     auto ahrs_handler_instance = std::make_shared<AHRSLocHandler>(
-        vehicle_config, control_config);
+        vehicle_config, localization_config);
 
     const std::vector<double> kDefaultVehicleState{0, 0, 0, 0};
 
@@ -127,11 +127,11 @@ std::shared_ptr<AHRSLocHandler> CreateAHRSLocHandlerInstance(
 static std::shared_ptr<AHRSLocHandler> CreateAHRSLocHandlerInstance(
     const std::map<std::string, std::string>& external_config,
     const json& vehicle_config,
-    const json& control_config) {
+    const json& localization_config) {
         json vehicle_config_local = merged_configs(external_config, vehicle_config);
-        json control_config_local = merged_configs(external_config, control_config);
+        json control_config_local = merged_configs(external_config, localization_config);
         std::cout << "===== localization handler is created with the following json configs =====" << std::endl;
-        std::cout << "control_config: " << control_config << std::endl;
+        std::cout << "localization_config: " << localization_config << std::endl;
         std::cout << "vehicle_config: " << vehicle_config << std::endl;
         auto ahrs_handler_instance = std::make_shared<AHRSLocHandler>(
         vehicle_config_local, control_config_local);
@@ -145,9 +145,9 @@ static std::shared_ptr<AHRSLocHandler> CreateAHRSLocHandlerInstance(
 std::shared_ptr<AHRSLocHandler> GetAHRSLocHandlerInstance(
     const std::map<std::string, std::string>& external_config,
     const json& vehicle_config,
-    const json& control_config) {
+    const json& localization_config) {
     static std::shared_ptr<AHRSLocHandler> ahrs_handler_instance =
-        CreateAHRSLocHandlerInstance(external_config, vehicle_config, control_config);
+        CreateAHRSLocHandlerInstance(external_config, vehicle_config, localization_config);
 
     return ahrs_handler_instance;
 }

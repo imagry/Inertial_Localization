@@ -103,10 +103,10 @@ void TestShortTermLocalization() {
     P_est_x.push_back(0.0);
     P_est_y.push_back(0.0);
     json vehicle_config = json::parse(std::ifstream("../vehicle_config.json"));
-    json control_config = json::parse(std::ifstream("../control_config.json"));
+    json localization_config = json::parse(std::ifstream("../localization_config.json"));
     ShortTermLocalization short_term_localization_obj =
-        ShortTermLocalization(control_config["vehicle_heading_estimation_mode"],
-                                control_config["vehicle_speed_estimation_mode"],
+        ShortTermLocalization(localization_config["vehicle_heading_estimation_mode"],
+                                localization_config["vehicle_speed_estimation_mode"],
                                 vehicle_config["WB"]);
     // short_term_localization_obj.ResetVehicleState(clock);
     std::vector<double> P_est_time;
@@ -211,10 +211,10 @@ void TestShortTermLocalization2() {
     P_est_x.push_back(0.0);
     P_est_y.push_back(0.0);
     json vehicle_config = json::parse(std::ifstream("../vehicle_config.json"));
-    json control_config = json::parse(std::ifstream("../control_config.json"));
+    json localization_config = json::parse(std::ifstream("../localization_config.json"));
     ShortTermLocalization short_term_localization_obj =
-        ShortTermLocalization(control_config["vehicle_heading_estimation_mode"],
-                                control_config["vehicle_speed_estimation_mode"],
+        ShortTermLocalization(localization_config["vehicle_heading_estimation_mode"],
+                                localization_config["vehicle_speed_estimation_mode"],
                                 vehicle_config["WB"]);
     // short_term_localization_obj.ResetVehicleState(clock);
     std::vector<double> P_est_time;
@@ -296,7 +296,7 @@ void TestNlohman() {
     double SR = data["steering_ratio"];
     std::cout << "steering_ratio X 4 = " << std::to_string(4.0 * SR)
               << std::endl;
-    std::ifstream f2("../control_config.json");
+    std::ifstream f2("../localization_config.json");
     json data2 = json::parse(f2);
     std::cout << data2 << std::endl;
     json LQR_config = data2["LQR_config"];

@@ -10,7 +10,7 @@ to run the pybind simulation:
     conda install -c conda-forge cmake
     ```
 3. copy files to 3rdParty in the main directory (todo: put in some      common place in the server)
-4. set local path variables in root/control_config.json
+4. set local path variables in root/localization_config.json
     ```
     "control_modul_dir": "root/folder/path",
     "visualization_data_path": "root/folder/path/data/temp_results/visualization_data"

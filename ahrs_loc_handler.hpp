@@ -12,18 +12,19 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 
 #include "Utils/AHRS.hpp"
 #include "Utils/control_debug_states.hpp"
+/* B10 deprication
 #include "Utils/Delay.hpp"
+*/
 #include "Utils/short_term_localization.hpp"
 #include "Utils/SpeedEstimators.hpp"
 using json = nlohmann::json;
 
 class AHRSLocHandler {
     public:
-    AHRSLocHandler(const json& vehicle_config, const json& control_config);
+    AHRSLocHandler(const json& vehicle_config, const json& localization_config);
     AHRSLocHandler(const std::string& vehicle_config_path = "vehicle_config.json",
                         const std::string& control_config_path = "localization_config.json");
     const ShortTermLocalization& GetLoc() const { return localization_obj_; }
-    const Delay<std::vector<double>>& GetDelay() const { return localization_delay_obj_; }
     bool UpdatePosition(PreciseSeconds clock);
     void UpdateIMU(const ImuSample& sample, PreciseSeconds clock);
     void UpdateSpeed(PreciseMps speed, PreciseSeconds clock);
@@ -48,10 +49,9 @@ class AHRSLocHandler {
 
 private:
     json vehicle_config_;
-    json control_config_;
+    json localization_config_;
 
     ShortTermLocalization localization_obj_;
-    Delay<std::vector<double>> localization_delay_obj_;
     AttitudeEstimator AHRS_obj_;
     std::unique_ptr<SpeedEstimator> speed_estimator_;
     std::mutex debug_obj_lock_;

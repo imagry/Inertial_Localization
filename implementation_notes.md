@@ -282,7 +282,7 @@ This plan outlines the incremental approach for removing control-related code fr
 
 #### Phase 3: Configuration Refinement
 1. **Configuration Files**
-   - Analyze `vehicle_config.json` and `control_config.json`
+   - Analyze `vehicle_config.json` and `localization_config.json`
    - Create new `localization_config.json` with only localization parameters
    - Update all code references that load these configurations:
      - Update `AHRSLocHandler` initialization

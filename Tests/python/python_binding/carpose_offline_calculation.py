@@ -103,7 +103,7 @@ def main():
         script_dir = os.path.dirname(os.path.abspath(__file__))
         repo_root = os.path.abspath(os.path.join(script_dir, "../../../"))
         vehicle_config_path = os.path.join(repo_root, "vehicle_config.json")
-        control_config_path = os.path.join(repo_root, "control_config.json")
+        control_config_path = os.path.join(repo_root, "localization_config.json")
         return vehicle_config_path, control_config_path
 
     # Get the paths to the configuration files
