@@ -156,7 +156,10 @@ def main():
         data = reading['data']
         
         # Call the appropriate method based on sensor type
-        if timestamp >= carpose_t0:
+        if timestamp >= carpose_t0: 
+            # attempt to make this offline calculation like ai driver, 
+            # but still ai driver is slightly different because of the unsynchronous way it works
+            # and also because of the timestamps it is saved which are not sensors timestamps.
             if sensor_id == "IMU":
                 # Create IMU sample and update the localization
                 imu_sample = control_module.ImuSample()
