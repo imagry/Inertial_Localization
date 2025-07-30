@@ -11,6 +11,7 @@ from scipy.spatial.transform import Rotation
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 import Classes
 import Functions
+import json
 # Add the path to import control_module (Python bindings)
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'build'))
 try:
@@ -31,7 +32,7 @@ def main():
     # Setup argument parser with only necessary arguments
     parser = argparse.ArgumentParser(description='Load AI-driver trip data using Classes.Trip.')
     parser.add_argument('--trip_path', type=str, 
-                        default='/home/eranvertz/imagry/trips/NAHARIA/2025-05-21T11_52_50/',
+                        default='data/backed_data_files/2025-05-21T11_52_50',
                         help='Path to the trip data directory')
     parser.add_argument('--visualize', action='store_true', default=False,
                         help='Visualize the car trajectory after processing')
@@ -83,6 +84,10 @@ def main():
         print(f"Warning: {e}")
     # zero the initial carpose heading 
     carpose_psi0 = external_car_pose["psi"][0]
+    carpose_x0 = external_car_pose["x"][0]
+    carpose_y0 = external_car_pose["y"][0]
+    # carpose_speed_angle0 = np.arctan2(carpose_y0,
+    carpose_t0 = external_car_pose["timestamp"][0]
     def rotate_trajectory(pts, angle):
         assert pts.shape[1] == 3, "path must be arranged as column (each point X,Y,psi is a row)"
         rot = Rotation.from_euler('ZYX', [angle, 0, 0], degrees=False).as_matrix()  # 3 X 3
@@ -103,25 +108,26 @@ def main():
         script_dir = os.path.dirname(os.path.abspath(__file__))
         repo_root = os.path.abspath(os.path.join(script_dir, "../../../"))
         vehicle_config_path = os.path.join(repo_root, "vehicle_config.json")
-        control_config_path = os.path.join(repo_root, "localization_config.json")
-        return vehicle_config_path, control_config_path
+        localization_config_path = os.path.join(repo_root, "localization_config.json")
+        return vehicle_config_path, localization_config_path
 
     # Get the paths to the configuration files
-    vehicle_config_path, control_config_path = get_config_paths()
-    
+    vehicle_config_path, localization_config_path = get_config_paths()
+    with open(localization_config_path, 'r') as f:
+        localization_config = json.load(f)
     # Check if configuration files exist
-    if not os.path.exists(vehicle_config_path) or not os.path.exists(control_config_path):
+    if not os.path.exists(vehicle_config_path) or not os.path.exists(localization_config_path):
         print(f"ERROR: Configuration files not found")
-        print(f"Looking for: {vehicle_config_path} and {control_config_path}")
+        print(f"Looking for: {vehicle_config_path} and {localization_config_path}")
         sys.exit(1)
     
     print(f"Initializing AHRSLocHandler with configuration files:")
     print(f"  - {vehicle_config_path}")
-    print(f"  - {control_config_path}")
+    print(f"  - {localization_config_path}")
     
     # Initialize the AHRSLocHandler with the config files
     try:
-        loc_handler = control_module.AHRSLocHandler(vehicle_config_path, control_config_path)
+        loc_handler = control_module.AHRSLocHandler(vehicle_config_path, localization_config_path)
     except Exception as e:
         print(f"Error initializing AHRSLocHandler: {e}")
         sys.exit(1)
@@ -150,87 +156,88 @@ def main():
         data = reading['data']
         
         # Call the appropriate method based on sensor type
-        if sensor_id == "IMU":
-            # Create IMU sample and update the localization
-            imu_sample = control_module.ImuSample()
-            imu_sample.time_stamp = timestamp
-            # Get acceleration data from IMU row
-            # Create Vec3d objects and set their properties separately
-            acc_vec = control_module.Vec3d()
-            # Use exact field names from the header
-            acc_vec.x = float(data["x_acc"])
-            acc_vec.y = float(data["y_acc"])
-            acc_vec.z = float(data["z_acc"])
-            imu_sample.acc_ = acc_vec
+        if timestamp >= carpose_t0:
+            if sensor_id == "IMU":
+                # Create IMU sample and update the localization
+                imu_sample = control_module.ImuSample()
+                imu_sample.time_stamp = timestamp
+                # Get acceleration data from IMU row
+                # Create Vec3d objects and set their properties separately
+                acc_vec = control_module.Vec3d()
+                # Use exact field names from the header
+                acc_vec.x = float(data["x_acc"])
+                acc_vec.y = float(data["y_acc"])
+                acc_vec.z = float(data["z_acc"])
+                imu_sample.acc_ = acc_vec
+                
+                # Create acceleration body frame vector with bias values
+                acc_b_vec = control_module.Vec3d()
+                # Use bias values if available, otherwise use the same values
+                acc_b_vec.x = float(data["x_acc_bias"]) 
+                acc_b_vec.y = float(data["y_acc_bias"]) 
+                acc_b_vec.z = float(data["z_acc_bias"]) 
+                imu_sample.acc_b_ = acc_b_vec
+                
+                # Create gyro vector
+                gyro_vec = control_module.Vec3d()
+                # Use correct field names
+                gyro_vec.x = float(data["x_gyro"]) * np.pi/180  # Convert to radians
+                gyro_vec.y = float(data["y_gyro"]) * np.pi/180  # Convert to radians
+                gyro_vec.z = float(data["z_gyro"]) * np.pi/180  # Convert to radians
+                imu_sample.gyro_ = gyro_vec
+                
+                # Create gyro body frame vector with bias values
+                gyro_b_vec = control_module.Vec3d()
+                # Use bias values if available, otherwise use the same values
+                gyro_b_vec.x = float(data["x_gyro_bias"])  * np.pi/180  # Convert to radians
+                gyro_b_vec.y = float(data["y_gyro_bias"])  * np.pi/180  # Convert to radians
+                gyro_b_vec.z = float(data["z_gyro_bias"])  * np.pi/180  # Convert to radians
+                imu_sample.gyro_b_ = gyro_b_vec
+                
+                # Create magnetometer vector
+                mag_vec = control_module.Vec3d()
+                # Use magnetometer fields if available, otherwise set to zero
+                mag_vec.x = float(data["x_mag"]) 
+                mag_vec.y = float(data["y_mag"]) 
+                mag_vec.z = float(data["z_mag"]) 
+                imu_sample.mag_ = mag_vec
+                
+                # Set Euler angles - using the exact field names from the header
+                imu_sample.pitch_ = float(data["pitch"]) * np.pi/180  # Convert to radians
+                imu_sample.roll_ = float(data["roll"]) * np.pi/180  # Convert to radians
+                imu_sample.yaw_ = float(data["yaw"]) * np.pi/180  # Convert to radians
+                
+                # Update localization with IMU data - pass both sample and timestamp
+                loc_handler.UpdateIMU(imu_sample, timestamp)
+
+            elif sensor_id == "speed" and localization_config["vehicle_speed_estimation_mode"] == "default":
+                # Convert speed from km/h to m/s
+                speed_mps = data["data_value"] / 3.6
+                loc_handler.UpdateSpeed(speed_mps, timestamp)
+                
+            elif sensor_id == "steering":
+                # Steering angle in radians
+                steering_rad = data["data_value"] * np.pi / 180  # Convert from degrees to radians
+                loc_handler.UpdateSteeringWheel(steering_rad, timestamp)
+                
+            elif sensor_id == "left_rear_wheel_speed" and localization_config["vehicle_speed_estimation_mode"] == "rear_average":
+                # Update left rear wheel speed
+                wheel_speed_mps = data["data_value"] / 3.6  # Convert from km/h to m/s
+                loc_handler.UpdateRearLeftSpeed(wheel_speed_mps, timestamp)
+                
+            elif sensor_id == "right_rear_wheel_speed" and localization_config["vehicle_speed_estimation_mode"] == "rear_average":
+                # Update right rear wheel speed
+                wheel_speed_mps = data["data_value"] / 3.6  # Convert from km/h to m/s
+                loc_handler.UpdateRearRightSpeed(wheel_speed_mps, timestamp)
+                
+            # Store vehicle pose estimate (do this periodically to reduce computation overhead)
+            position = loc_handler.GetPosition()  # Use correct method name from ahrs_loc_handler.hpp
+            yaw = loc_handler.GetVehicleHeading()  # Use correct method name from ahrs_loc_handler.hpp
             
-            # Create acceleration body frame vector with bias values
-            acc_b_vec = control_module.Vec3d()
-            # Use bias values if available, otherwise use the same values
-            acc_b_vec.x = float(data["x_acc_bias"]) 
-            acc_b_vec.y = float(data["y_acc_bias"]) 
-            acc_b_vec.z = float(data["z_acc_bias"]) 
-            imu_sample.acc_b_ = acc_b_vec
-            
-            # Create gyro vector
-            gyro_vec = control_module.Vec3d()
-            # Use correct field names
-            gyro_vec.x = float(data["x_gyro"]) * np.pi/180  # Convert to radians
-            gyro_vec.y = float(data["y_gyro"]) * np.pi/180  # Convert to radians
-            gyro_vec.z = float(data["z_gyro"]) * np.pi/180  # Convert to radians
-            imu_sample.gyro_ = gyro_vec
-            
-            # Create gyro body frame vector with bias values
-            gyro_b_vec = control_module.Vec3d()
-            # Use bias values if available, otherwise use the same values
-            gyro_b_vec.x = float(data["x_gyro_bias"])  * np.pi/180  # Convert to radians
-            gyro_b_vec.y = float(data["y_gyro_bias"])  * np.pi/180  # Convert to radians
-            gyro_b_vec.z = float(data["z_gyro_bias"])  * np.pi/180  # Convert to radians
-            imu_sample.gyro_b_ = gyro_b_vec
-            
-            # Create magnetometer vector
-            mag_vec = control_module.Vec3d()
-            # Use magnetometer fields if available, otherwise set to zero
-            mag_vec.x = float(data["x_mag"]) 
-            mag_vec.y = float(data["y_mag"]) 
-            mag_vec.z = float(data["z_mag"]) 
-            imu_sample.mag_ = mag_vec
-            
-            # Set Euler angles - using the exact field names from the header
-            imu_sample.pitch_ = float(data["pitch"]) * np.pi/180  # Convert to radians
-            imu_sample.roll_ = float(data["roll"]) * np.pi/180  # Convert to radians
-            imu_sample.yaw_ = float(data["yaw"]) * np.pi/180  # Convert to radians
-            
-            # Update localization with IMU data - pass both sample and timestamp
-            loc_handler.UpdateIMU(imu_sample, timestamp)
-            
-        elif sensor_id == "speed":
-            # Convert speed from km/h to m/s
-            speed_mps = data["data_value"] / 3.6
-            loc_handler.UpdateSpeed(speed_mps, timestamp)
-            
-        elif sensor_id == "steering":
-            # Steering angle in radians
-            steering_rad = data["data_value"] * np.pi / 180  # Convert from degrees to radians
-            loc_handler.UpdateSteeringWheel(steering_rad, timestamp)
-            
-        elif sensor_id == "left_rear_wheel_speed":
-            # Update left rear wheel speed
-            wheel_speed_mps = data["data_value"] / 3.6  # Convert from km/h to m/s
-            loc_handler.UpdateRearLeftSpeed(wheel_speed_mps, timestamp)
-            
-        elif sensor_id == "right_rear_wheel_speed":
-            # Update right rear wheel speed
-            wheel_speed_mps = data["data_value"] / 3.6  # Convert from km/h to m/s
-            loc_handler.UpdateRearRightSpeed(wheel_speed_mps, timestamp)
-            
-        # Store vehicle pose estimate (do this periodically to reduce computation overhead)
-        position = loc_handler.GetPosition()  # Use correct method name from ahrs_loc_handler.hpp
-        yaw = loc_handler.GetVehicleHeading()  # Use correct method name from ahrs_loc_handler.hpp
-        
-        car_pose["timestamp"].append(timestamp)
-        car_pose["x"].append(position[0])
-        car_pose["y"].append(position[1])
-        car_pose["yaw"].append(yaw)
+            car_pose["timestamp"].append(timestamp)
+            car_pose["x"].append(position[0])
+            car_pose["y"].append(position[1])
+            car_pose["yaw"].append(yaw)
     
     print("Sensor data processing completed.")
     print(f"Generated {len(car_pose['timestamp'])} position estimates")

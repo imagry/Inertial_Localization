@@ -15,13 +15,13 @@ NC='\033[0m' # No Color
 REPO_ROOT=$(pwd)
 BUILD_DIR="${REPO_ROOT}/build"
 TEST_SCRIPT="${REPO_ROOT}/Tests/python/python_binding/carpose_offline_calculation.py"
-DEFAULT_TRIP_PATH="/home/eranvertz/imagry/trips/NAHARIA/2025-05-21T11_52_50/"
+DEFAULT_TRIP_PATH="${REPO_ROOT}/data/backed_data_files/2025-05-21T11_52_50"
 RESULTS_DIR="${REPO_ROOT}/results"
 
 # Expected values for regression testing (will be populated from first run)
-EXPECTED_POSE_X=670.500340
-EXPECTED_POSE_Y=504.368338
-EXPECTED_POSE_YAW=0.778360
+EXPECTED_POSE_X=653.724931
+EXPECTED_POSE_Y=513.178808
+EXPECTED_POSE_YAW=0.790709
 
 # Flag to indicate if we should update the expected values
 UPDATE_EXPECTED=false

@@ -166,12 +166,12 @@ localization_config.json, current speed is set to the provided low-resolution va
 */
 void AHRSLocHandler::UpdateSpeed(PreciseMps speed, PreciseSeconds clock) {
     if (!speed_estimator_)
-    {
+    { // use speed odometry 
         localization_obj_.UpdateSpeed(speed * 
             double(localization_config_["speed_measurement_scale_factor"]));
         std::lock_guard<std::mutex> guard(debug_obj_lock_);
         debug_obj_.vehicle_speed_.push_back(std::make_pair(speed, clock));
-    } else {
+    } else { // this call is followed by a rear wheel update
         localization_obj_.UpdateSpeed(speed_estimator_->GetEstimatedSpeed());
         std::lock_guard<std::mutex> guard(debug_obj_lock_);
         debug_obj_.vehicle_speed_.push_back(std::make_pair(
