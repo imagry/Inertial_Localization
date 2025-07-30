@@ -168,7 +168,7 @@ The repository currently maintains the original structure from the combined cont
 ### 3.1 Current Python Binding Structure
 - Located in `Tests/python/python_binding/`
 - Uses pybind11 for C++ to Python interface
-- Current implementation in `control_module.cpp` only binds control-related classes
+- Current implementation in `localization_pybind_module.cpp` only binds control-related classes
 - Build system uses CMake to generate Python extension module
 
 ### 3.2 Task B5: Python Binding Requirements for Localization
@@ -199,7 +199,7 @@ The repository currently maintains the original structure from the combined cont
 - Vector/Matrix data from Eigen
 
 ### 3.3 Implementation Plan for Task B5
-1. Extend `control_module.cpp` to include localization bindings
+1. Extend `localization_pybind_module.cpp` to include localization bindings
 2. Create new Python extension specifically for localization components
 3. Implement comprehensive test cases for the Python bindings
 4. Ensure proper memory management and type conversion

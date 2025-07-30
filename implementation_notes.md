@@ -67,7 +67,7 @@ We analyzed the codebase to identify key components needed for localization:
 
 The following changes were made to the Python bindings:
 
-1. **Focused Bindings**: Modified `control_module.cpp` to focus only on localization components
+1. **Focused Bindings**: Modified `localization_pybind_module.cpp` to focus only on localization components
    - Removed bindings for `StanleyController` and `PIDBasedLongitudinalController`
    - Removed bindings for `ControlAPI`
    - Removed unnecessary header includes
@@ -302,7 +302,7 @@ This plan outlines the incremental approach for removing control-related code fr
 
 #### Phase 4: Python Bindings Cleanup
 1. **Update Python Module**
-   - Rename `control_module.cpp` to `localization_module.cpp`
+   - Rename `localization_pybind_module.cpp` to `localization_module.cpp`
    - Remove any remaining control-related bindings
    - Update all Python scripts to use the renamed module
    - Update build scripts and CMakeLists.txt
@@ -341,10 +341,10 @@ This plan outlines the incremental approach for removing control-related code fr
 | ControlAPI | ControlAPI.hpp/cpp | Remove | Wrapper, Tests, test_setup.hpp, test_setup.cpp |
 | StanleyController | Utils/Controllers.hpp/cpp | Remove | ControlAPI, ControllerTests.hpp, ControllerTests.cpp |
 | LongitudinalController | Utils/Controllers.hpp/cpp | Remove | ControlAPI, ControllerTests.hpp, ControllerTests.cpp |
-| ControlWrapper | wrapper/control_api_wrapper.* | Refactor | Python bindings, control_module.cpp |
+| ControlWrapper | wrapper/control_api_wrapper.* | Refactor | Python bindings, localization_pybind_module.cpp |
 | ControlTests | Tests/ControllerTests.* | Refactor/Remove | test_setup.hpp, test_setup.cpp, CMakeLists.txt |
 | Control Debug | Utils/control_debug_states.* | Remove | Utils headers, test cases |
-| Python Bindings | control_module.cpp | Refactor | carpose_offline_calculation.py, other Python scripts |
+| Python Bindings | localization_pybind_module.cpp | Refactor | carpose_offline_calculation.py, other Python scripts |
 
 #### Configuration Updates
 

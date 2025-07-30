@@ -15,7 +15,7 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "../../../Utils/Classes.hpp"
 #include "../../../Utils/short_term_localization.hpp"
 
-PYBIND11_MODULE(control_module, m) {
+PYBIND11_MODULE(localization_pybind_module, m) {
     // Bind supporting structures
     pybind11::class_<Vec3d>(m, "Vec3d")
         .def(pybind11::init<>())

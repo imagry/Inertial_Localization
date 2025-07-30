@@ -13,12 +13,12 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 if script_dir not in sys.path:
     sys.path.append(script_dir)
 
-# Try to import the control_module
+# Try to import the localization_pybind_module
 try:
-    from build import control_module
-    print("Successfully imported control_module")
+    from build import localization_pybind_module
+    print("Successfully imported localization_pybind_module")
 except ImportError as e:
-    print(f"Error importing control_module: {e}")
+    print(f"Error importing localization_pybind_module: {e}")
     print("Make sure the module has been built correctly")
     print("You may need to run 'cd Tests/python/python_binding && ./rebuild.sh'")
     sys.exit(1)
@@ -29,7 +29,7 @@ def test_init():
     
     # Test Vec3d class
     try:
-        vec = control_module.Vec3d()
+        vec = localization_pybind_module.Vec3d()
         vec.x = 1.0
         vec.y = 2.0
         vec.z = 3.0
@@ -40,7 +40,7 @@ def test_init():
     
     # Test ImuSample class
     try:
-        imu = control_module.ImuSample()
+        imu = localization_pybind_module.ImuSample()
         imu.time_stamp = 123.456
         print(f"Created ImuSample with timestamp: {imu.time_stamp} - Success!")
     except Exception as e:
@@ -65,7 +65,7 @@ def test_init():
     
     # Test AHRSLocHandler initialization
     try:
-        handler = control_module.AHRSLocHandler(vehicle_config_path, control_config_path)
+        handler = localization_pybind_module.AHRSLocHandler(vehicle_config_path, control_config_path)
         print("Created AHRSLocHandler successfully!")
         return True
     except Exception as e:
@@ -88,36 +88,36 @@ def test_update_imu():
     
     try:
         # Initialize AHRSLocHandler
-        handler = control_module.AHRSLocHandler(vehicle_config_path, control_config_path)
+        handler = localization_pybind_module.AHRSLocHandler(vehicle_config_path, control_config_path)
         
         # Create Vec3d objects for the IMU data
-        acc = control_module.Vec3d()
+        acc = localization_pybind_module.Vec3d()
         acc.x = 0.1
         acc.y = 0.2
         acc.z = 0.3
         
-        acc_b = control_module.Vec3d()
+        acc_b = localization_pybind_module.Vec3d()
         acc_b.x = 0.4
         acc_b.y = 0.5
         acc_b.z = 0.6
         
-        gyro = control_module.Vec3d()
+        gyro = localization_pybind_module.Vec3d()
         gyro.x = 0.01
         gyro.y = 0.02
         gyro.z = 0.03
         
-        gyro_b = control_module.Vec3d()
+        gyro_b = localization_pybind_module.Vec3d()
         gyro_b.x = 0.04
         gyro_b.y = 0.05
         gyro_b.z = 0.06
         
-        mag = control_module.Vec3d()
+        mag = localization_pybind_module.Vec3d()
         mag.x = 10.0
         mag.y = 20.0
         mag.z = 30.0
         
         # Create an IMU sample
-        imu = control_module.ImuSample()
+        imu = localization_pybind_module.ImuSample()
         imu.time_stamp = time.time()
         imu.acc_ = acc
         imu.acc_b_ = acc_b
@@ -156,7 +156,7 @@ def test_update_wheel_speeds():
     
     try:
         # Initialize AHRSLocHandler
-        handler = control_module.AHRSLocHandler(vehicle_config_path, control_config_path)
+        handler = localization_pybind_module.AHRSLocHandler(vehicle_config_path, control_config_path)
         
         # Call UpdateRearRightSpeed
         right_speed = 5.2  # 5.2 m/s
@@ -187,7 +187,7 @@ def test_reset_vehicle_state():
     
     try:
         # Initialize AHRSLocHandler
-        handler = control_module.AHRSLocHandler(vehicle_config_path, control_config_path)
+        handler = localization_pybind_module.AHRSLocHandler(vehicle_config_path, control_config_path)
         
         # Get initial position
         initial_position = handler.GetPosition()

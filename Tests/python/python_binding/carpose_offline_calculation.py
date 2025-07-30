@@ -12,13 +12,13 @@ sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 import Classes
 import Functions
 import json
-# Add the path to import control_module (Python bindings)
+# Add the path to import localization_pybind_module (Python bindings)
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'build'))
 try:
-    import control_module
-    print("Successfully imported control_module")
+    import localization_pybind_module
+    print("Successfully imported localization_pybind_module")
 except ImportError as e:
-    print(f"Failed to import control_module: {e}")
+    print(f"Failed to import localization_pybind_module: {e}")
     print("Make sure you have built the Python bindings properly")
     print("You may need to run the build script in Tests/python/python_binding/")
     sys.exit(1)
@@ -127,7 +127,7 @@ def main():
     
     # Initialize the AHRSLocHandler with the config files
     try:
-        loc_handler = control_module.AHRSLocHandler(vehicle_config_path, localization_config_path)
+        loc_handler = localization_pybind_module.AHRSLocHandler(vehicle_config_path, localization_config_path)
     except Exception as e:
         print(f"Error initializing AHRSLocHandler: {e}")
         sys.exit(1)
@@ -162,11 +162,11 @@ def main():
             # and also because of the timestamps it is saved which are not sensors timestamps.
             if sensor_id == "IMU":
                 # Create IMU sample and update the localization
-                imu_sample = control_module.ImuSample()
+                imu_sample = localization_pybind_module.ImuSample()
                 imu_sample.time_stamp = timestamp
                 # Get acceleration data from IMU row
                 # Create Vec3d objects and set their properties separately
-                acc_vec = control_module.Vec3d()
+                acc_vec = localization_pybind_module.Vec3d()
                 # Use exact field names from the header
                 acc_vec.x = float(data["x_acc"])
                 acc_vec.y = float(data["y_acc"])
@@ -174,7 +174,7 @@ def main():
                 imu_sample.acc_ = acc_vec
                 
                 # Create acceleration body frame vector with bias values
-                acc_b_vec = control_module.Vec3d()
+                acc_b_vec = localization_pybind_module.Vec3d()
                 # Use bias values if available, otherwise use the same values
                 acc_b_vec.x = float(data["x_acc_bias"]) 
                 acc_b_vec.y = float(data["y_acc_bias"]) 
@@ -182,7 +182,7 @@ def main():
                 imu_sample.acc_b_ = acc_b_vec
                 
                 # Create gyro vector
-                gyro_vec = control_module.Vec3d()
+                gyro_vec = localization_pybind_module.Vec3d()
                 # Use correct field names
                 gyro_vec.x = float(data["x_gyro"]) * np.pi/180  # Convert to radians
                 gyro_vec.y = float(data["y_gyro"]) * np.pi/180  # Convert to radians
@@ -190,7 +190,7 @@ def main():
                 imu_sample.gyro_ = gyro_vec
                 
                 # Create gyro body frame vector with bias values
-                gyro_b_vec = control_module.Vec3d()
+                gyro_b_vec = localization_pybind_module.Vec3d()
                 # Use bias values if available, otherwise use the same values
                 gyro_b_vec.x = float(data["x_gyro_bias"])  * np.pi/180  # Convert to radians
                 gyro_b_vec.y = float(data["y_gyro_bias"])  * np.pi/180  # Convert to radians
@@ -198,7 +198,7 @@ def main():
                 imu_sample.gyro_b_ = gyro_b_vec
                 
                 # Create magnetometer vector
-                mag_vec = control_module.Vec3d()
+                mag_vec = localization_pybind_module.Vec3d()
                 # Use magnetometer fields if available, otherwise set to zero
                 mag_vec.x = float(data["x_mag"]) 
                 mag_vec.y = float(data["y_mag"]) 
