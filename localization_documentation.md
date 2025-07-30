@@ -1,212 +1,232 @@
 # Localization System Documentation
 
-## 1. Workflow Setup and Repository Organization
+## 1. Module Overview - Input and Output
 
-### 1.1 Initial Setup
-- Created a standalone repository for the localization system by forking from the original control and localization repository
-- Established proper `.gitignore` configuration to exclude build artifacts and third-party libraries from version control
-- Set up project planning with `localization_separation_plan.md` focusing on Objective B: Standalone Localization Repository with API
-- Created `.copilot-instructions.md` to maintain context during the refactoring process
+The Inertial Localization module is a standalone system that provides precise vehicle positioning using inertial sensors and wheel odometry data. It does not rely on GPS or other external positioning systems, making it robust for autonomous driving in GPS-denied environments.
 
-### 1.2 Current Repository Structure
-The repository currently maintains the original structure from the combined control and localization system, including:
-- Core files for localization functionality
-- Some control-related components that will be removed during refactoring
-- Dependencies on third-party libraries (Eigen, JSON, etc.)
-- Build system based on CMake
+### Input
+- **IMU data**: Acceleration and angular velocity measurements
+- **Wheel odometry**: Left and right rear wheel speed
+- **Steering wheel angle**: Used for vehicle kinematic calculations
+- **External heading** (optional): Heading reference from external source
+- **Configuration files**: Vehicle parameters and localization algorithm settings
 
-### 1.3 Existing Python Binding Framework
-- The repository already includes a Python binding framework using pybind11
-- Located in `Tests/python/python_binding/`
-- Current bindings are primarily for control components (StanleyController, etc.)
-- No dedicated bindings yet for localization components
-- Uses CMake for building the Python extension module
+### Output
+- **Position**: 2D coordinates (x, y) in meters
+- **Heading**: Vehicle orientation in radians
+- **Velocity**: Vehicle speed in m/s
 
-## 2. Localization System Data Flow
+## 2. Data Flow
 
-### 2.1 Core Components
-
-#### 2.1.1 Primary Localization Handler (`ahrs_loc_handler.cpp/hpp`)
-- **Role**: Main entry point and coordinator for the localization system
-- **Key Classes**: `AHRSLocHandler`
-- **Initialization**:
-  - Takes vehicle and control configuration (from JSON files)
-  - Initializes localization components (AHRS, ShortTermLocalization)
-- **Key Methods**:
-  - `UpdatePosition`: Updates position based on current state
-  - `UpdateIMU`: Processes IMU sensor data
-  - `UpdateSpeed`: Updates vehicle speed information
-  - `UpdateRearRightSpeed`/`UpdateRearLeftSpeed`: Updates wheel odometry data
-  - `UpdateSteeringWheel`: Updates steering wheel angle measurements
-  - `UpdateHeading`: Updates heading information
-  - `GetLoc`: Retrieves localization object
-- **Dependencies**:
-  - Uses `ShortTermLocalization` for position tracking
-  - Uses `AttitudeEstimator` (AHRS) for orientation
-  - Uses `Delay` for handling time-delayed data
-  - Uses `ControlDebugStates` for debugging
-
-#### 2.1.2 Short-Term Localization (`Utils/short_term_localization.cpp/hpp`)
-- **Role**: Handles short-term position and velocity estimation
-- **Key Classes**: `ShortTermLocalization`, `LocState`
-- **Initialization**:
-  - Configures based on heading and speed estimation modes
-  - Takes vehicle wheelbase as parameter
-- **Key Methods**:
-  - `State`: Returns current localization state
-  - `UpdateDelta`: Updates steering angle (converted from steering wheel angle)
-  - `UpdateHeading`: Updates vehicle heading
-  - Various position update functions
-- **Functionality**:
-  - Processes data from IMU and other sensors
-  - Uses steering wheel angle (converted to steering/tire angle) for vehicle kinematics
-  - Performs dead reckoning calculations
-  - Updates position and velocity estimates based on vehicle kinematic model
-
-#### 2.1.3 Attitude and Heading Reference System (`Utils/AHRS.cpp/hpp`)
-- **Role**: Determines vehicle orientation and heading
-- **Key Classes**: `AttitudeEstimator`, `SegmentIMURecording`
-- **Initialization**:
-  - Takes sample rate, gain parameters
-  - Configures coordinate system (NED - North, East, Down)
-- **Functionality**:
-  - Fuses gyroscope and accelerometer data
-  - Maintains attitude estimation
-  - Provides heading information for localization
-  - Uses quaternion representation for orientation
-
-#### 2.1.4 Speed Estimation (`Utils/SpeedEstimators.cpp/hpp`)
-- **Role**: Provides accurate vehicle speed estimation using sensor fusion
-- **Key Classes**: `SpeedEstimator` (interface), `KalmanFilter` (implementation)
-- **Initialization**:
-  - Configures based on sensor noise parameters
-  - Takes initial speed and bias values
-- **Key Methods**:
-  - `UpdateIMU`: Process new IMU data
-  - `UpdateRearSpeeds`: Process wheel odometry data
-  - `UpdateState`: Estimate new vehicle state
-  - `GetEstimatedSpeed`: Retrieve current speed estimate
-- **Functionality**:
-  - Fuses IMU and wheel odometry data
-  - Uses Kalman filtering for optimal speed estimation
-  - Handles sensor noise and bias
-
-#### 2.1.5 Debug and Monitoring (`Utils/localization_debug_states.cpp/hpp`)
-- **Role**: Provides debugging and state monitoring capabilities
-- **Key Classes**: `ControlDebugStates`
-- **Initialization**:
-  - Takes debugging directory information
-  - Configures based on localization mode
-- **Functionality**:
-  - Creates debug directories if needed
-  - Logs internal states of the localization system
-  - Saves data to files for analysis
-  - Supports performance evaluation and visualization
-
-#### 2.1.6 Control API Interface (`ControlAPI.cpp/hpp`)
-- **Role**: Main API interface that integrates localization with the control system
-- **Key Classes**: `ControlAPI`
-- **Initialization**:
-  - Takes vehicle and control configuration (from JSON files)
-  - Creates an instance of `AHRSLocHandler` through the `GetAHRSLocHandlerInstance` factory method
-- **Localization-Related Components**:
-  - Contains `std::shared_ptr<AHRSLocHandler> localization_handler` for accessing localization functionality
-- **Key Methods Using Localization**:
-  - Uses `localization_handler->GetLoc().State()` to retrieve position and orientation
-  - Uses `localization_handler->GetPosition()` for current position
-  - Uses `localization_handler->GetVehicleHeading()` for current heading
-  - Uses `localization_handler->GetDelay()` for time-delayed data handling
-- **Role in the System**:
-  - Serves as the main interface between control components and localization
-  - Provides access to localization data for motion planning and control calculations
-  - Primary point for integrating localization into the broader vehicle control system
-
-### 2.2 Data Flow Diagram
-
-```
-                   ┌───────────────────┐
-                   │  Sensor Inputs    │
-                   │  - IMU            │
-                   │  - Wheel Odometry │
-                   │  - Steering Wheel │
-                   │  - Speed          │
-                   └─────────┬─────────┘
-                             │
-                             ▼
-┌────────────────────┐    ┌─────────────────────────────────────────────┐
-│    ControlAPI      │◄───┤         ahrs_loc_handler.cpp/hpp            │
-│    Interface       │    │         Main Localization Handler           │
-└────────────────────┘    └─┬─────────────────┬───────────────┬─────────┘
-                            │                 │               │
-                            ▼                 ▼               ▼
-                  ┌─────────────────┐ ┌─────────────┐ ┌─────────────────┐
-                  │  AHRS.cpp/hpp   │ │SpeedEstima- │ │short_term_      │
-                  │  Attitude &     │ │tors.cpp/hpp │ │localization.cpp │
-                  │  Heading        │ │Speed        │ │Position &       │
-                  │  Reference      │ │Estimation   │ │Velocity         │
-                  └────────┬────────┘ └─────┬───────┘ └────────┬────────┘
-                           │                │                  │
-                           └────────────────┼──────────────────┘
-                                            │
-                                            ▼
-                                ┌───────────────────────┐
-                                │ localization_debug_states  │
-                                │ Debugging & Logging   │
-                                └───────────┬───────────┘
-                                            │
-                                            ▼
-                                ┌───────────────────────┐
-                                │   Output Interface    │
-                                │   - Position          │
-                                │   - Velocity          │
-                                │   - Orientation       │
-                                └───────────────────────┘
+```mermaid
+flowchart TD
+    SensorInputs["Sensor Inputs"]
+    SensorInputs --> |IMU data| AHRSHandler
+    SensorInputs --> |Wheel odometry| AHRSHandler
+    SensorInputs --> |Steering wheel angle| AHRSHandler
+    SensorInputs --> |External heading| AHRSHandler
+    
+    AHRSHandler["AHRSLocHandler\nMain Localization Coordinator"]
+    
+    AHRSHandler --> AHRS["AttitudeEstimator\nOrientation & Heading"]
+    AHRSHandler --> SpeedEst["SpeedEstimator\nVelocity Calculation"]
+    AHRSHandler --> ShortTerm["ShortTermLocalization\nPosition Tracking"]
+    
+    AHRS --> ShortTerm
+    SpeedEst --> ShortTerm
+    
+    ShortTerm --> DebugStates["LocalizationDebugStates\nLogging & Monitoring"]
+    
+    AHRSHandler --> Output["Output Interface"]
+    Output --> |Position| Client
+    Output --> |Heading| Client
+    Output --> |Velocity| Client
+    
+    PythonAPI["Python Bindings\nlocalization_pybind_module"] --> AHRSHandler
+    Client["Client Application"] --> PythonAPI
 ```
 
-## 3. Python Binding Requirements and Planning
+## 3. Core Components
 
-### 3.1 Current Python Binding Structure
-- Located in `Tests/python/python_binding/`
-- Uses pybind11 for C++ to Python interface
-- Current implementation in `localization_pybind_module.cpp` only binds control-related classes
-- Build system uses CMake to generate Python extension module
+### 3.1 Localization Handler (`ahrs_loc_handler.cpp/hpp`)
+- **Function**: Central coordinator that processes sensor inputs and manages localization components
+- **Input**: 
+  - IMU measurements (accelerometer and gyroscope data)
+  - Wheel speeds (left and right rear wheels)
+  - Steering wheel angle
+  - External heading (optional)
+- **Output**:
+  - Vehicle position (x, y coordinates)
+  - Vehicle heading (orientation)
+  - Vehicle velocity
+- **Key Methods**:
+  - `UpdateIMU()`: Process new IMU data
+  - `UpdateRearRightSpeed()`/`UpdateRearLeftSpeed()`: Process wheel odometry
+  - `UpdateSteeringWheel()`: Update steering angle
+  - `GetPosition()`: Retrieve current position
+  - `GetVehicleHeading()`: Retrieve current heading
 
-### 3.2 Task B5: Python Binding Requirements for Localization
+### 3.2 Attitude and Heading Reference System (`Utils/AHRS.cpp/hpp`)
+- **Function**: Determines vehicle orientation and heading
+- **Input**:
+  - Gyroscope data (angular velocity)
+  - Accelerometer data
+- **Output**:
+  - Vehicle orientation (quaternion)
+  - Heading information
+- **Key Methods**:
+  - `UpdateIMU()`: Process IMU measurements
+  - `GetAttitude()`: Retrieve current attitude
+  - `GetHeading()`: Retrieve current heading
 
-#### 3.2.1 Key Classes to Expose
-- **`AHRSLocHandler`**: Main localization handler
-  - Constructor with JSON configuration
-  - Methods for updating position, IMU, and speed data
-  - Methods for retrieving localization state
-- **`ShortTermLocalization`**: Core localization component
-  - Methods for accessing localization state
-  - Configuration options (if applicable)
-- **`AttitudeEstimator`**: AHRS component
-  - Methods for updating and accessing orientation information
-  - Access to quaternion representation
-- **`SpeedEstimator`/`KalmanFilter`**: Vehicle speed estimation
-  - Methods for processing IMU and wheel odometry data
-  - Access to speed estimates and state information
-- **`ControlAPI`** (localization-related parts only):
-  - Access to the localization handler
-  - Methods to retrieve position, heading, and velocity
-  - Handling of time-delayed data through the delay compensation system
+### 3.3 Short-Term Localization (`Utils/short_term_localization.cpp/hpp`)
+- **Function**: Handles vehicle position tracking and velocity estimation
+- **Input**:
+  - Heading information from AHRS
+  - Speed estimates from SpeedEstimator
+  - Steering angle
+- **Output**:
+  - Vehicle position (x, y)
+  - Vehicle state (position, heading, velocity)
+- **Key Methods**:
+  - `UpdateDelta()`: Update steering angle
+  - `UpdateHeading()`: Update vehicle heading
+  - `State()`: Retrieve current localization state
 
-#### 3.2.2 Data Types to Support
-- JSON configuration via Python dictionaries or JSON strings
-- Sensor data structures (ImuSample, etc.)
-- Timestamp handling (PreciseSeconds)
-- Vector/Matrix data from Eigen
+### 3.4 Speed Estimator (`Utils/SpeedEstimators.cpp/hpp`)
+- **Function**: Fuses sensor data to estimate vehicle speed
+- **Input**:
+  - IMU acceleration data
+  - Wheel odometry (rear wheel speeds)
+- **Output**:
+  - Vehicle speed estimate
+- **Key Methods**:
+  - `UpdateIMU()`: Process new IMU data
+  - `UpdateRearSpeeds()`: Process wheel odometry data
+  - `GetEstimatedSpeed()`: Retrieve current speed estimate
 
-### 3.3 Implementation Plan for Task B5
-1. Extend `localization_pybind_module.cpp` to include localization bindings
-2. Create new Python extension specifically for localization components
-3. Implement comprehensive test cases for the Python bindings
-4. Ensure proper memory management and type conversion
+### 3.5 Localization Debug States (`Utils/localization_debug_states.cpp/hpp`)
+- **Function**: Provides debugging and logging capabilities
+- **Input**:
+  - Localization state information
+  - Configuration settings
+- **Output**:
+  - Debug files and logs
+  - Performance metrics
+- **Key Methods**:
+  - `SaveLocData()`: Save localization data to file
+  - `CreateDirectories()`: Create necessary directories for logs
 
-### 3.4 Future Tasks
-- Ensure compatibility with existing sensor API (Task B6)
-- Create Python test script for loading AI-driver trip data (Task B7)
-- Implement synchronous sensor data processing using timestamps (Task B8)
-- Document API usage and examples (Task B9)
-- Remove control-related unused functionality (Task B10)
+## 4. Python Binding Model
+
+The Python binding layer provides a clean interface to access the C++ localization functionality from Python applications. It is implemented using pybind11.
+
+### 4.1 Structure
+- **Location**: `Tests/python/python_binding/localization_pybind_module.cpp`
+- **Build System**: CMake with a dedicated build script
+- **Exposed Classes**:
+  - `AHRSLocHandler`: Main localization coordinator
+  - `ImuSample`: Structure for IMU measurements
+  - `Vec3d`: Vector for 3D data (acceleration, gyroscope)
+
+### 4.2 Key Bound Methods
+- **AHRSLocHandler Constructor**: Takes paths to configuration JSON files
+- **Sensor Update Methods**:
+  - `UpdateIMU(imu_sample, timestamp)`: Process IMU data
+  - `UpdateRearRightSpeed(speed, timestamp)`: Update right wheel speed
+  - `UpdateRearLeftSpeed(speed, timestamp)`: Update left wheel speed
+  - `UpdateSteeringWheel(angle, timestamp)`: Update steering angle
+  - `UpdateHeading(heading, timestamp)`: Update external heading
+- **State Access Methods**:
+  - `GetPosition()`: Get current position [x, y, z]
+  - `GetVehicleHeading()`: Get current vehicle heading
+
+### 4.3 Usage Example
+```python
+import localization_pybind_module as lm
+
+# Create localization handler with config files
+loc_handler = lm.AHRSLocHandler("vehicle_config.json", "localization_config.json")
+
+# Create IMU sample
+imu_sample = lm.ImuSample()
+imu_sample.acc_ = lm.Vec3d()
+imu_sample.acc_.x = 0.1  # Forward acceleration
+imu_sample.acc_.y = 0.0  # Lateral acceleration
+imu_sample.acc_.z = 9.8  # Vertical acceleration
+
+# Update localization with sensor data
+loc_handler.UpdateIMU(imu_sample, timestamp)
+loc_handler.UpdateRearRightSpeed(5.0, timestamp)
+loc_handler.UpdateRearLeftSpeed(5.0, timestamp)
+loc_handler.UpdateSteeringWheel(0.1, timestamp)
+
+# Retrieve position and heading
+position = loc_handler.GetPosition()
+heading = loc_handler.GetVehicleHeading()
+```
+
+## 5. Offline Calculation Test Script
+
+The `carpose_offline_calculation.py` script demonstrates how to use the Python binding for processing sensor data from an AI-driver trip.
+
+### 5.1 Overview
+- **Location**: `Tests/python/python_binding/carpose_offline_calculation.py`
+- **Purpose**: Process pre-recorded sensor data to calculate vehicle trajectory
+- **Input**: Trip directory containing recorded sensor data
+- **Output**: Calculated vehicle trajectory and visualization
+
+### 5.2 Key Features
+- **Data Loading**: Uses `Classes.Trip` to load and organize sensor data
+- **Chronological Processing**: Sorts all sensor readings by timestamp
+- **Sensor Fusion**: Processes IMU, wheel speed, and steering data in sequence
+- **Trajectory Comparison**: Compares calculated trajectory with reference data
+- **Visualization**: Optional plot of calculated vs. reference trajectory
+
+### 5.3 Workflow
+1. Load trip data from specified directory
+2. Sort sensor readings chronologically
+3. Initialize localization handler with config files
+4. Process each sensor reading in time order:
+   - IMU data with proper unit conversion
+   - Wheel speed data
+   - Steering wheel angle data
+5. Calculate and store vehicle position at each step
+6. Compare with reference trajectory if available
+7. Generate visualization and save results
+
+### 5.4 Command Line Usage
+```bash
+python carpose_offline_calculation.py --trip_path /path/to/trip_data \
+                                      --visualize \
+                                      --output_dir ./results
+```
+
+## 6. Test Localization Script
+
+The `test_localization.sh` script provides a comprehensive regression test for the localization functionality.
+
+### 6.1 Overview
+- **Location**: `/home/eranvertz/git/Inertial_Localization/test_localization.sh`
+- **Purpose**: Verify localization algorithm works correctly after code changes
+- **Operation**: Runs the offline calculation script and compares results with expected values
+
+### 6.2 Key Features
+- **Build Verification**: Ensures Python bindings build correctly
+- **Result Validation**: Compares calculated position and heading with expected values
+- **Tolerance Testing**: Accepts small differences within specified tolerance
+- **Automatic Updates**: Optional flag to update expected values after intentional changes
+
+### 6.3 Workflow
+1. Build the Python binding module
+2. Run the offline calculation script with a test dataset
+3. Extract final position (x, y) and heading values
+4. Compare against expected values with defined tolerance
+5. Report success or failure with detailed error information
+
+### 6.4 Command Line Usage
+```bash
+./test_localization.sh [--update-expected] [--trip-path PATH]
+```
+
+
