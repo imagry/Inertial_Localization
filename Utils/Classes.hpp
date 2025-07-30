@@ -19,18 +19,6 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "../Utils/units.hpp"
 #include "../Utils/DataHandling.hpp"
 
-struct Trajectory {
-    std::vector<PreciseMeters> x_coor;
-    std::vector<PreciseMeters> y_coor;
-    std::vector<PreciseRadians> psi;
-    std::vector<PreciseMeters> s;  // arc length per
-    void Init(const std::vector<PreciseMeters>& x,
-              const std::vector<PreciseMeters>& y);
-    int ProjectPoint(PreciseMeters x, PreciseMeters y, PreciseRadians psi, 
-        bool exclude_points_behind_vehicle=false) const;
-    void Swap(Trajectory& other);
-};
-
 struct Buffer_any {
     std::deque<std::any> values_;
     int maximal_size_;
@@ -59,16 +47,7 @@ class Delay_any {
     int Size();
     void Test();
 };
-template <typename T>
-class TemplateTestClass{
- public:
-    T a_;
-    explicit TemplateTestClass(T input):
-        a_(input) {}
-    void Print_a() {
-        std::cout<< a_ <<"\n";
-    }
-};
+
 class RateLimiter {
  private:
     double maximal_rate_;
@@ -396,54 +375,4 @@ class ContinuousAngleOnline{
             
         }
 };
-class GainScheduler {
-private:
-    double gain_reduction_speed_;
 
-public:
-    GainScheduler(double gain_reduction_speed)
-        : gain_reduction_speed_(gain_reduction_speed){}
-
-    double calc_gain(double x) const {
-        // std::cout << "x: " << x << std::endl;
-        if (x < gain_reduction_speed_) {
-            return 1.0;
-        } else { // x> gain_reduction_speed_
-            return gain_reduction_speed_/x;
-        }
-    }
-};
-
-/* NOTE: implement LPF as k * (uk-y[k-1])-> LPF -> integrator
-   limit the input to the integrator */
-class SecondOrderLPF_WithRateAndAccLimit {
- public:
-    SecondOrderLPF_WithRateAndAccLimit() {}
-    SecondOrderLPF_WithRateAndAccLimit(PreciseSeconds clock, double freq_cutoff,
-                                       double restraint_coefficient,
-                                       double max_rate,
-                                       double max_negative_rate, double max_acc,
-                                       double initial_value,
-                                       double initial_derivative,
-                                       double max_dt = 2.0, double eps = 1e-6);
-
-    void Reset(PreciseSeconds clock, double initial_value,
-               double initial_derivative);
-
-    std::pair<double /* velocity */, double /* acceleration */> Update(
-        PreciseSeconds clock, double uk, double reference_value,
-        double reference_derivative);
-
- private:
-    double wc_LPO1_;  // cut off frequency in rad/sec of the 1st order filter
-    double K_;
-    double max_dt_;
-    PreciseSeconds last_update_time_;
-    double eps_;
-    double max_rate_, max_negative_rate_;
-    double max_acc_;
-    double integrator_1_;
-    double integrator_2_;
-
-    void InitializeClock(PreciseSeconds clock) { last_update_time_ = clock; }
-};

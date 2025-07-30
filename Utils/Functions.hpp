@@ -58,43 +58,9 @@ PreciseRadians FoldAngles(const PreciseRadians &u);
 void ContinuousAngle(const std::vector<PreciseRadians> &u, 
                            std::vector<PreciseRadians> *y);
 PreciseRadians Deg2Rad(Degrees deg);
-std::tuple<std::vector<double>, std::vector<double>>
-SplineInterpulationEigenXBased(const std::vector<double> &input_x,
-                                    const std::vector<double> &input_y,
-                                    double dx);
-void CalcCurveLength(const std::vector<double> &x, const std::vector<double> &y,
-                     std::vector<double> *s);
-void CalcCurveHeading(const std::vector<double> &x,
-                      const std::vector<double> &y,
-                      std::vector<PreciseRadians> *yaw);
-std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
-SplineInterpulationEigen(const std::vector<double> &input_x,
-                            const std::vector<double> &input_y, double ds);
-std::tuple<std::vector<double>, std::vector<double>>
-SplineInterpulationEigen(const std::vector<double> &input_x,
-                         const std::vector<double> &input_y,
-                         const std::vector<double> &s_interp);
-std::tuple<std::vector<double>, std::vector<double>, bool>
-LinearPathInterpulation(const std::vector<double> &input_x,
-                        const std::vector<double> &input_y,
-                        const std::vector<double> &s_interp);
 Eigen::Matrix3d Mpsi(PreciseRadians psi);
 Eigen::Matrix3d AffineTransformation2D(double x, double y, double psi);
 Eigen::Matrix3d InvAffineTransformation2D(Eigen::Matrix3d T);
 Eigen::Matrix<double, Dynamic, 2> ProjectPoints2D(
     Matrix3d T12, Eigen::Matrix<double, Dynamic, 2> points);
 double LimitValue(double u, double u_min, double u_max);
-double deadzone(double u, double deadzone);
-std::tuple<std::vector<double>, bool> LinearInterp(
-    const std::vector<double>& x,
-    const std::vector<double>& y,
-    const std::vector<double>& xi
-);
-std::tuple<std::vector<PreciseMeters>, 
-           std::vector<PreciseMeters>, 
-           std::vector<PreciseRadians>> 
-convert_path_control_points(
-    const std::vector<PreciseMeters>& path_points_cp1_x,
-    const std::vector<PreciseMeters>& path_points_cp1_y,
-    PreciseMeters lr1, PreciseMeters lr2, PreciseMeters WB,
-    bool convert_to_cp2_frame = false);
