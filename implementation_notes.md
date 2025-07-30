@@ -364,12 +364,12 @@ This phased approach ensures we can maintain a working localization system throu
 #### Key Files Modified
 
 1. **Header Files**
-   - `Utils/control_debug_states.hpp`: Completely removed control-related methods and variables
+   - `Utils/localization_debug_states.hpp` (renamed from `control_debug_states.hpp`): Completely removed control-related methods and variables
    - `Utils/Classes.hpp`: Removed control-related functionality
-   - `ahrs_loc_handler.hpp`: Removed control interfaces
+   - `ahrs_loc_handler.hpp`: Removed control interfaces and updated to use `localization_debug_states.hpp`
 
 2. **Implementation Files**
-   - `Utils/control_debug_states.cpp`: Completely removed methods for debugging control states
+   - `Utils/localization_debug_states.cpp` (renamed from `control_debug_states.cpp`): Completely removed methods for debugging control states
    - `ahrs_loc_handler.cpp`: Removed control-related methods
    - `Main.cpp`: Removed control test function calls
 
@@ -398,6 +398,17 @@ This phased approach ensures we can maintain a working localization system throu
    - Verified all localization functionality still works via the test_localization.sh script
    - All localization tests pass with expected position and orientation values
    - Confirmed no regression in localization accuracy after removal of control code
+
+4. **Renaming Debug States Files**:
+   - Renamed `Utils/control_debug_states.hpp` to `Utils/localization_debug_states.hpp`
+   - Renamed `Utils/control_debug_states.cpp` to `Utils/localization_debug_states.cpp`
+   - Updated class name from `ControlDebugStates` to `LocalizationDebugStates`
+   - Removed unused `localization_mode` parameter from constructor and methods
+   - Updated references in `ahrs_loc_handler.hpp`
+   - Updated file references in `Utils/CMakeLists.txt`
+   - Updated documentation in `localization_documentation.md`
+   - Changed internal variable names from `control_module_dir_exist_` to `localization_module_dir_exist_`
+   - Updated error messages to reference "localization module" instead of "control module"
 
 ### Final Status
 

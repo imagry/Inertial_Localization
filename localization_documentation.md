@@ -91,7 +91,7 @@ The repository currently maintains the original structure from the combined cont
   - Uses Kalman filtering for optimal speed estimation
   - Handles sensor noise and bias
 
-#### 2.1.5 Debug and Monitoring (`Utils/control_debug_states.cpp/hpp`)
+#### 2.1.5 Debug and Monitoring (`Utils/localization_debug_states.cpp/hpp`)
 - **Role**: Provides debugging and state monitoring capabilities
 - **Key Classes**: `ControlDebugStates`
 - **Initialization**:
@@ -150,7 +150,7 @@ The repository currently maintains the original structure from the combined cont
                                             │
                                             ▼
                                 ┌───────────────────────┐
-                                │ control_debug_states  │
+                                │ localization_debug_states  │
                                 │ Debugging & Logging   │
                                 └───────────┬───────────┘
                                             │

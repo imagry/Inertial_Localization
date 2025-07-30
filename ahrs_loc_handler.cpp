@@ -19,7 +19,7 @@ AHRSLocHandler::AHRSLocHandler(const json& vehicle_config,
                 localization_config_["AHRS_gain"],
                 (std::string)"NED")),
       debug_mode_(localization_config_["debug_mode"]),
-      debug_obj_(localization_config_["debug_mode"], true,
+      debug_obj_(localization_config_["debug_mode"],
                  localization_config_["control_modul_dir"]) {
         // Speed estimation modes:
         //  - "kalman" for Kalman filter using rear-wheels speeds and IMU
@@ -58,7 +58,7 @@ AHRSLocHandler::AHRSLocHandler(const std::string& vehicle_config_path,
                 localization_config_["AHRS_gain"],
                 (std::string)"NED")),
       debug_mode_(localization_config_["debug_mode"]),
-      debug_obj_(localization_config_["debug_mode"], true,
+      debug_obj_(localization_config_["debug_mode"],
                  localization_config_["control_modul_dir"]) {
         // Speed estimation modes:
         //  - "kalman" for Kalman filter using rear-wheels speeds and IMU

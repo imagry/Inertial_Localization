@@ -3,7 +3,7 @@ set(SOURCE_FILES
   Classes.cpp
   # B10: Removed as part of control code removal
   # Controllers.cpp
-  control_debug_states.cpp
+  localization_debug_states.cpp
   DataHandling.cpp
   AHRS.cpp
   short_term_localization.cpp

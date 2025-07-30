@@ -11,7 +11,7 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include <nlohmann/json.hpp>
 
 #include "Utils/AHRS.hpp"
-#include "Utils/control_debug_states.hpp"
+#include "Utils/localization_debug_states.hpp"
 /* B10 deprication
 #include "Utils/Delay.hpp"
 */
@@ -57,5 +57,5 @@ private:
     std::mutex debug_obj_lock_;
     std::mutex UpdatePosition_lock_;
     bool debug_mode_;
-    ControlDebugStates debug_obj_;
+    LocalizationDebugStates debug_obj_;
 };
