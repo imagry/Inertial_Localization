@@ -804,3 +804,4 @@ struct Buffer_any {
   * `Tests/python/python_binding/localization_pybind_module.cpp`: Updated Python bindings
   * `Tests/python/python_binding/carpose_offline_calculation.py`: Updated test script
   * `wrapper/control_api_wrapper.cpp`: Updated API wrapper implementation
+
