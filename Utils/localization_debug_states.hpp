@@ -18,24 +18,6 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 class LocalizationDebugStates {
     // attributes
  public:
-    std::vector<std::pair<PreciseMps, PreciseSeconds>>
-        vehicle_speed_;  // <vehicle_heading_, time>
-    std::vector<std::pair<PreciseRadians, PreciseSeconds>>
-        vehicle_heading_;  // <vehicle_heading_, time>
-    std::vector<std::pair<std::vector<double>, double>>
-        vehicle_state_;  // <<x,y,psi>, time>
-    std::vector<std::pair<PreciseRadians, PreciseSeconds>>
-        delta_;  // <steering command, time>
-    std::vector<std::pair<PreciseRadians, PreciseSeconds>>
-        steering_measured_;  // <steering, time>
-    // NOTE: Controller's vehicle_velocity_ is updated via controller,
-    // unlike vehicle_speed_, which is updated from localization obj
-    // via UpdateSpeed(). Duplication for compatibility with Python code.
-    std::vector<std::pair<PreciseMps, PreciseSeconds>> vehicle_velocity_;
-    std::vector<std::pair<PreciseMps, PreciseSeconds>>
-        vehicle_velocity_filtered_;
-    std::vector<std::pair<PreciseSeconds, PreciseSeconds>> clock_;
-    std::vector<std::pair<PreciseSeconds, PreciseSeconds>> dt_;
     // methods
     std::mutex lock_;
     LocalizationDebugStates() {}

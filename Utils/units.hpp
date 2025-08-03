@@ -4,7 +4,8 @@ Proprietary and confidential.
 Created on Thu Feb 19 2024 by Eran Vertzberger
 */
 #pragma once
-// lengths
+
+// ======================= Length Units =======================
 using IntPixels = int;
 using Pixels = float;
 using MinimapPreciseMeters = float;
@@ -14,54 +15,55 @@ using KiloPreciseMeters = float;
 using Miles = float;
 using PreciseMeters = double;
 
-// Area
+// ======================= Area Units ========================
 using Meters2 = float;
 
-// speed
+// ======================= Speed Units =======================
 using PreciseMps = double;  // meter(s) per second
-using _Mps = double;       // meter(s) per second
+using Mps = double;        // meter(s) per second (renamed from _Mps for consistency)
 using Kph = float;         // kilometer(s) per hour
 using Mph = float;         // mile(s) per hour
 
-// angular speed
+// ======================= Angular Speed Units =======================
 using DegreesPerSec = float;  // Degree(s) per sec
 using RadiansPerSec = float;  // Radian(s) per sec
 
-// acceleration
+// ======================= Acceleration Units =======================
 using Mps2 = float;          // meter per second^2
 using Gauss = float;         // Acceleration of gravity
 using Mps2Precise = double;  // meter per second^2
 
-// jerk
+// ======================= Jerk Units =======================
 using Mps3 = float;  // meter per second^3
 
-// time
-// probably should be used from chrono allowing math operations
+// ======================= Time Units =======================
 using Seconds = float;
 using PreciseSeconds = double;
-// using Milliseconds = uint64_t;
-// using Microseconds = uint64_t;
+// Chrono time units should be used instead of these when possible
+using Milliseconds = uint64_t;
+using Microseconds = uint64_t;
 
-// angles
+// ======================= Angle Units =======================
 using Degrees = float;
 using Radians = float;
 using PreciseDegrees = double;
 using PreciseRadians = double;
 
-// temperature
+// ======================= Temperature Units =======================
 using Celsius = float;
-using Farenheit = float;
+using Fahrenheit = float;  // Fixed typo in Fahrenheit
 using Kelvin = float;
 
-// Percentage unit of the full size
-// values should be in range [0, 1]
+// ======================= Other Units =======================
+// Percentage unit of the full size, values should be in range [0, 1]
 using Percentage = double;
 
-// other
+// Generic unit-less value
 using Unitless = float;
 
+// Lane position
+using Lane = float;
+
+// Uncomment and use these when switching to std::chrono
 // using ClockUTC = std::chrono::system_clock;
 // using TimePointUTC = std::chrono::time_point<ClockUTC>;
-
-using Lane = float;
-// using LaneIndex = uint8_t;
