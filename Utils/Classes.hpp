@@ -19,32 +19,129 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "../Utils/units.hpp"
 #include "../Utils/DataHandling.hpp"
 
-struct Buffer_any {
-    std::deque<std::any> values_;
-    int maximal_size_;
-    explicit Buffer_any(int max_size);
+/**
+ * @brief A generic buffer class that can store any type of values.
+ * 
+ * This class implements a circular buffer with a fixed maximum size.
+ * When the buffer is full, adding new values removes the oldest ones.
+ */
+struct BufferAny {
+    std::deque<std::any> values_;  ///< Container for the buffer values
+    int maximal_size_;             ///< Maximum number of values the buffer can hold
+    
+    /**
+     * @brief Constructs a buffer with the specified maximum size.
+     * 
+     * @param max_size Maximum number of values the buffer can hold
+     */
+    explicit BufferAny(int max_size);
+    
+    /**
+     * @brief Adds a new value to the buffer.
+     * 
+     * If the buffer is already at maximum capacity, the oldest value is removed.
+     * 
+     * @param new_value Value to add to the buffer
+     */
     void Update(std::any new_value);
+    
+    /**
+     * @brief Gets the value at the specified index.
+     * 
+     * @param idx Index of the value to retrieve
+     * @return std::any Value at the specified index
+     */
     std::any GetValue(int idx);
+    
+    /**
+     * @brief Gets the oldest value in the buffer.
+     * 
+     * @return std::any The first (oldest) value in the buffer
+     */
     std::any GetFirst();
+    
+    /**
+     * @brief Gets the newest value in the buffer.
+     * 
+     * @return std::any The last (newest) value in the buffer
+     */
     std::any GetLast();
-    // defined for buffers containing doubles (clock)
+    
+    /**
+     * @brief Finds the value closest to the target.
+     * 
+     * Only works for buffers containing double values.
+     * 
+     * @param target Value to find the closest match for
+     * @return std::tuple<int, double> Index and value of the closest match
+     */
     std::tuple<int, double> ClosestValue(double target);
+    
+    /**
+     * @brief Gets the current number of values in the buffer.
+     * 
+     * @return int Number of values currently stored
+     */
     int Size();
 };
-class Delay_any {
+
+/**
+ * @brief Provides delayed access to values based on timestamps.
+ * 
+ * This class stores values along with their timestamps, allowing
+ * retrieval of values at specific time points in the past.
+ */
+class DelayAny {
  private:
-    Buffer_any stored_values_;
-    Buffer_any clock_;
-    PreciseSeconds max_time_delay_;
-    std::any default_value_;
+    BufferAny stored_values_;  ///< Buffer for stored values
+    BufferAny clock_;          ///< Buffer for timestamps
+    PreciseSeconds max_time_delay_;  ///< Maximum time delay supported
+    std::any default_value_;    ///< Default value returned when no matching timestamp is found
  public:
-    Delay_any(PreciseSeconds max_time_delay,
+    /**
+     * @brief Constructs a delay buffer with specified parameters.
+     * 
+     * @param max_time_delay Maximum time delay supported in seconds
+     * @param nominal_dt Nominal time step between updates in seconds
+     * @param default_value Default value returned when no matching timestamp is found
+     */
+    DelayAny(PreciseSeconds max_time_delay,
           PreciseSeconds nominal_dt,
           std::any default_value);
+    
+    /**
+     * @brief Adds a new value with its timestamp to the buffer.
+     * 
+     * @param clock Current timestamp
+     * @param value Value to store
+     */
     void Update(PreciseSeconds clock, std::any value);
+    
+    /**
+     * @brief Gets the value corresponding to a past timestamp.
+     * 
+     * @param delayed_clock Past timestamp to retrieve value for
+     * @return std::any Value at the specified past time
+     */
     std::any GetDelayedValue(PreciseSeconds delayed_clock);
+    
+    /**
+     * @brief Gets the latest timestamp in the buffer.
+     * 
+     * @return PreciseSeconds Latest timestamp
+     */
     PreciseSeconds GetLatestTime();
+    
+    /**
+     * @brief Gets the number of stored values.
+     * 
+     * @return int Number of values stored
+     */
     int Size();
+    
+    /**
+     * @brief Tests the functionality of the delay buffer.
+     */
     void Test();
 };
 

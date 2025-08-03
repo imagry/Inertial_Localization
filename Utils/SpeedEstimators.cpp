@@ -3,13 +3,17 @@ Unauthorized copying of this file, via any medium is strictly prohibited.
 Proprietary and confidential.
 Created on Thu Nov 28 2024 by Dor Siman Tov
 */
+#include "SpeedEstimators.hpp"
+
+#include <cmath>  // instead of math.h
+
 #include <iostream>
-#include <math.h>
 #include <mutex>
 #include <string>
 #include <vector>
+
 #include <Eigen/Dense>
-#include "SpeedEstimators.hpp"
+
 #include "units.hpp"
 
 KalmanFilter::KalmanFilter(
@@ -20,9 +24,9 @@ KalmanFilter::KalmanFilter(
         Mps2Precise initial_imu_bias,
         double initial_posterior_speed_std,
         double initial_posterior_bias_std) :
-        IMU_ACC_NOISE_DENSITY_(imu_acc_noise_density),
-        IMU_ACC_BIAS_INSTABILITY_(imu_acc_bias_instability),
-        WHEEL_SPEED_NOISE_STD_(wheel_speed_noise_std),
+        imu_acc_noise_density_(imu_acc_noise_density),
+        imu_acc_bias_instability_(imu_acc_bias_instability),
+        wheel_speed_noise_std_(wheel_speed_noise_std),
         R_(wheel_speed_noise_std),
         IMU_(nullptr),
         wheel_odometry_(nullptr),
@@ -69,8 +73,8 @@ void KalmanFilter::UpdateState(PreciseSeconds clock) {
          0, 1;
     Eigen::Vector2d B;
     B << dt, 0;
-    Q_(0, 0) = pow(IMU_ACC_NOISE_DENSITY_, 2) / dt;
-    Q_(1, 1) = pow(IMU_ACC_BIAS_INSTABILITY_, 2) * dt;
+    Q_(0, 0) = pow(imu_acc_noise_density_, 2) / dt;
+    Q_(1, 1) = pow(imu_acc_bias_instability_, 2) * dt;
     x_ = F * x_ + B * IMU_->acc_.x;
     P_ = F * P_ * F.transpose() + Q_;
 

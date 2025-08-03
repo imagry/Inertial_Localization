@@ -16,33 +16,33 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "Functions.hpp"// NOLINT
 #include "DataHandling.hpp"// NOLINT
 
-Buffer_any::Buffer_any(int max_size)
+BufferAny::BufferAny(int max_size)
 :
     maximal_size_(max_size)
 {}
-void Buffer_any::Update(std::any new_value) {
+void BufferAny::Update(std::any new_value) {
     values_.push_back(new_value);
     if (values_.size() > maximal_size_) {
         values_.pop_front();
     }
 }
-std::any Buffer_any::GetValue(int idx) {
+std::any BufferAny::GetValue(int idx) {
     if (idx > this->Size()) {
         throw std::invalid_argument("Buffer::GetValue:  idx > buffer.size");
     }
     return values_.at(idx);
 }
-std::any Buffer_any::GetFirst() {
+std::any BufferAny::GetFirst() {
     return values_.front();
 }
-std::any Buffer_any::GetLast() {
+std::any BufferAny::GetLast() {
     if (this->Size() == 0) {
         throw std::invalid_argument("Buffer::GetLast:  buffer.size is zero");
     }
     return values_.back();
 }
 // defined for buffers containing doubles (clock)
-std::tuple<int, double> Buffer_any::ClosestValue(double target) {
+std::tuple<int, double> BufferAny::ClosestValue(double target) {
     std::vector<double> delta_vec;
     for (int i=0; i < this->Size(); i++) {
         delta_vec.push_back(
@@ -52,22 +52,22 @@ std::tuple<int, double> Buffer_any::ClosestValue(double target) {
         delta_vec.begin(), delta_vec.end()) - delta_vec.begin();
     return std::make_tuple(idx, std::any_cast<double>(values_[idx]));
 }
-int Buffer_any::Size() {
+int BufferAny::Size() {
     return values_.size();
 }
-Delay_any::Delay_any(PreciseSeconds max_time_delay,
+DelayAny::DelayAny(PreciseSeconds max_time_delay,
           PreciseSeconds nominal_dt,
           std::any default_value):
-          stored_values_(Buffer_any(max_time_delay / nominal_dt)),
-          clock_(Buffer_any(max_time_delay / nominal_dt)),
+          stored_values_(BufferAny(max_time_delay / nominal_dt)),
+          clock_(BufferAny(max_time_delay / nominal_dt)),
           max_time_delay_(max_time_delay),
           default_value_(default_value)
           {}
-void Delay_any::Update(PreciseSeconds clock, std::any value) {
+void DelayAny::Update(PreciseSeconds clock, std::any value) {
     clock_.Update(clock);
     stored_values_.Update(value);
 }
-std::any Delay_any::GetDelayedValue(PreciseSeconds delayed_clock) {
+std::any DelayAny::GetDelayedValue(PreciseSeconds delayed_clock) {
     if (clock_.Size() == 0) {
         return default_value_;
     } else if (
@@ -79,13 +79,13 @@ std::any Delay_any::GetDelayedValue(PreciseSeconds delayed_clock) {
         return stored_values_.GetValue(idx);
     }
 }
-PreciseSeconds Delay_any::GetLatestTime() {
+PreciseSeconds DelayAny::GetLatestTime() {
     return std::any_cast<PreciseSeconds>(clock_.GetLast());
 }
-int Delay_any::Size() {
+int DelayAny::Size() {
     return clock_.Size();
 }
-void Delay_any::Test() {
+void DelayAny::Test() {
     std::vector<PreciseSeconds> t = Arange(0, 10, 0.001);
     std::vector<double> signal;
     std::vector<double> delayed_signal;
@@ -94,7 +94,7 @@ void Delay_any::Test() {
             2 * M_PI * 0.3 * ti + 0.3));
     }
     PreciseSeconds nominal_delay = 0.1;
-    Delay_any delay_obj = Delay_any(0.3, 0.001, static_cast<double>(0.0));
+    DelayAny delay_obj = DelayAny(0.3, 0.001, static_cast<double>(0.0));
 
     for (int i = 0; i < t.size(); ++i) {
         delay_obj.Update(t[i], signal[i]);
