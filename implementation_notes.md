@@ -542,7 +542,247 @@ struct Buffer_any {
      * 
      * @return int Number of values currently stored
      */
+    ````markdown
     int Size();
+};
+```
+
+* **Files Analyzed:** `Utils/Classes.hpp`
+
+## Code Quality Improvements
+
+### 2023-11-15: Exception Handling Improvements
+
+* **Action:** Replaced assert statements with proper exception handling in multiple modules
+* **Details:** 
+  * Removed `assert` statements from the codebase and replaced them with proper C++ exception handling
+  * Used `std::invalid_argument` and `std::runtime_error` exceptions where appropriate to provide informative error messages
+  * Removed `assertm` macro from several files and replaced its usage with exception throwing
+  * Added proper error checking with conditional statements followed by exceptions
+  * These changes make the code more robust in production environments where assertions might be disabled
+* **Files Modified:** 
+  * `Utils/Functions.cpp`: Replaced assertions in `VectorNorm2D()` and `ProjectPoints2D()` with proper exception handling
+  * `Utils/AHRS.cpp`: Replaced assertions with exception handling in multiple methods including:
+    * Error reporting in file format handling
+    * Data validation in `BufferOfVectors::Add_data()`
+    * Dimension checking in `BufferOfMatrices::Add_data()`
+    * Vector validation in `Vector_2_norm()`, `Norm_nX2_array()`, and `Quaternion2euler()`
+  * `Utils/DataHandling.cpp`: Removed unnecessary assertion include
+* **Example changes:**
+
+  **Before:**
+  ```cpp
+  double VectorNorm2D(const std::vector<double> &vec2d) {
+      assert(vec2d.size() == 2);
+      double vec_norm = sqrt(pow(vec2d[0], 2) + pow(vec2d[1], 2));
+      return vec_norm;
+  }
+  ```
+
+  **After:**
+  ```cpp
+  double VectorNorm2D(const std::vector<double> &vec2d) {
+      if (vec2d.size() != 2) {
+          throw std::invalid_argument("VectorNorm2D: invalid dimensions (must be 2)");
+      }
+      double vec_norm = sqrt(pow(vec2d[0], 2) + pow(vec2d[1], 2));
+      return vec_norm;
+  }
+  ```
+
+### 2023-11-15: Function Module Documentation Improvements
+
+* **Action:** Added comprehensive Doxygen-style documentation to the Functions module
+* **Details:**
+  * Added detailed documentation comments to all functions in `Functions.hpp`
+  * Fixed typos in function names (e.g., `ConverteigenToVecor` → `ConvertEigenToVector`)
+  * Organized functions into logical groups with section comments
+  * Added parameter descriptions and return value documentation
+* **Files Modified:**
+  * `Utils/Functions.hpp`: Added Doxygen comments to all functions and organized them into logical sections
+  * `Utils/Functions.cpp`: Fixed function name typos to match header changes
+* **Example improvements:**
+
+  **Before:**
+  ```cpp
+  std::vector<double> AddScalarToVector(const std::vector<double> &vec,
+                                        double scalar);
+  std::vector<double> MultiplyVectorByScalar(const std::vector<double> &vec,
+                                             double scalar);
+  ```
+
+  **After:**
+  ```cpp
+  /**
+   * @brief Adds a scalar value to each element of a vector.
+   * 
+   * @param vec Input vector
+   * @param scalar Value to add to each element
+   * @return std::vector<double> New vector with scalar added to each element
+   */
+  std::vector<double> AddScalarToVector(const std::vector<double> &vec,
+                                        double scalar);
+
+  /**
+   * @brief Multiplies each element of a vector by a scalar.
+   * 
+   * @param vec Input vector
+   * @param scalar Value to multiply each element by
+   * @return std::vector<double> New vector with elements multiplied by scalar
+   */
+  std::vector<double> MultiplyVectorByScalar(const std::vector<double> &vec,
+                                             double scalar);
+  ```
+
+### 2023-11-15: Classes Module Refactoring
+
+* **Action:** Renamed classes in the Classes module to follow CamelCase naming convention and added documentation
+* **Details:**
+  * Renamed `Buffer_any` class to `BufferAny` (CamelCase)
+  * Renamed `Delay_any` class to `DelayAny` (CamelCase)
+  * Added comprehensive Doxygen-style documentation to all classes and methods
+  * Updated all method signatures and method calls to reflect the renamed classes
+  * Ensured all tests still pass after the refactoring
+* **Files Modified:**
+  * `Utils/Classes.hpp`: Updated class names and added documentation
+  * `Utils/Classes.cpp`: Updated all class and method implementations to match the header changes
+* **Example improvements:**
+
+  **Before:**
+  ```cpp
+  class Buffer_any {
+    int max_size_;
+    vector<std::any> data_;
+  
+  public:
+    Buffer_any(int max_size);
+    void Update(std::any data);
+    std::any GetLast();
+    int Size();
+  };
+  ```
+
+  **After:**
+  ```cpp
+  /**
+   * @brief Generic circular buffer that can store any data type.
+   * 
+   * This class provides a fixed-size circular buffer implementation
+   * that can store values of any type using std::any.
+   */
+  class BufferAny {
+    int max_size_;
+    vector<std::any> data_;
+  
+  public:
+    /**
+     * @brief Constructs a buffer with specified maximum size.
+     * 
+     * @param max_size Maximum number of elements to store
+     */
+    BufferAny(int max_size);
+    
+    /**
+     * @brief Adds a new element to the buffer.
+     * 
+     * If the buffer is full, the oldest element is removed.
+     * 
+     * @param data The element to add
+     */
+    void Update(std::any data);
+    
+    /**
+     * @brief Gets the most recently added element.
+     * 
+     * @return std::any The most recent element
+     */
+    std::any GetLast();
+    
+    /**
+     * @brief Gets the current number of elements in the buffer.
+     * 
+     * @return int Current buffer size
+     */
+    int Size();
+  };
+  ```
+
+### 2023-11-15: SpeedEstimators Module Refactoring
+
+* **Action:** Improved SpeedEstimators module with better documentation, naming conventions, and code organization
+* **Details:**
+  * Updated include order to follow Google C++ Style Guide (system headers, third-party libraries, then project headers)
+  * Renamed member variables from ALL_CAPS to lowercase_with_underscore with trailing underscores
+  * Added comprehensive Doxygen-style documentation to all classes and methods
+  * Improved class hierarchy documentation with proper description of each algorithm
+* **Files Modified:**
+  * `Utils/SpeedEstimators.hpp`: Added documentation and updated naming conventions
+  * `Utils/SpeedEstimators.cpp`: Updated include order and variable names to match header changes
+* **Example improvements:**
+
+  **Before:**
+  ```cpp
+  class SpeedEstimator {
+  public:
+      virtual ~SpeedEstimator() = default;
+      virtual void UpdateIMU(const ImuSample* sample) = 0;
+      virtual void UpdateRearSpeeds(const WheelOdometrySample* sample) = 0;
+      virtual void UpdateState(PreciseSeconds clock) = 0;
+      virtual PreciseMps GetEstimatedSpeed() = 0;
+      virtual bool IsEstimatedSpeedValid() = 0;
+  };
+  ```
+
+  **After:**
+  ```cpp
+  /**
+   * @brief Abstract base class for vehicle speed estimation.
+   * 
+   * This class defines the interface for different speed estimation strategies.
+   * Each concrete implementation provides a specific algorithm for estimating
+   * vehicle speed based on sensor data.
+   */
+  class SpeedEstimator {
+  public:
+      virtual ~SpeedEstimator() = default;
+      
+      /**
+       * @brief Updates the estimator with a new IMU sample.
+       * 
+       * @param sample Pointer to the new IMU sample
+       */
+      virtual void UpdateIMU(const ImuSample* sample) = 0;
+      
+      /**
+       * @brief Updates the estimator with new wheel odometry data.
+       * 
+       * @param sample Pointer to the new wheel odometry sample
+       */
+      virtual void UpdateRearSpeeds(const WheelOdometrySample* sample) = 0;
+      
+      /**
+       * @brief Estimates the vehicle state based on current sensor data.
+       * 
+       * @param clock Current timestamp
+       */
+      virtual void UpdateState(PreciseSeconds clock) = 0;
+      
+      /**
+       * @brief Gets the current estimated vehicle speed.
+       * 
+       * @return PreciseMps Estimated speed in meters per second
+       */
+      virtual PreciseMps GetEstimatedSpeed() = 0;
+      
+      /**
+       * @brief Checks if the current speed estimate is valid.
+       * 
+       * @return bool True if the estimate is valid, false otherwise
+       */
+      virtual bool IsEstimatedSpeedValid() = 0;
+  };
+  ```
+````
 };
 ```
 

@@ -8,11 +8,11 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include <utility>
 #include <algorithm>
 #include <iostream>
-#include <cassert>  // for assertion
 #include <numeric>
 #include <fstream>
+#include <stdexcept>
+#include <sstream>
 #include <unsupported/Eigen/MatrixFunctions>
-#define assertm(exp, msg) assert(((void)msg, exp))
 #define _USE_MATH_DEFINES
 #include "AHRS.hpp"// NOLINT
 using std::fstream;
@@ -115,7 +115,7 @@ SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
             str << "unknown file format with " << column_counter << " columns";
             std::cout << "unknown file format with " << column_counter
                 << " columns" << endl;
-            assertm(0, str.str());
+            throw std::runtime_error(str.str());
         }
 
         while (getline(file, line)) {   // insert new line from file to line
@@ -402,8 +402,9 @@ BufferOfVectors::BufferOfVectors(int window_size, int n_cols) {
     accumulated_size_ = 0;
 }
 void BufferOfVectors::Add_data(vector<double> new_line) {
-    assertm(new_line.size() == number_of_columns_,
-    "wrong number of columns");
+    if (new_line.size() != number_of_columns_) {
+        throw std::invalid_argument("BufferOfVectors::Add_data: wrong number of columns");
+    }
     data_.push_back(new_line);
     accumulated_size_ = data_.size();
 }
@@ -431,9 +432,12 @@ BufferOfMatrices::BufferOfMatrices(int window_size, int n_rows,
     accumulated_size_ = 0;
 }
 void BufferOfMatrices::Add_data(vector<vector<double>> new_mat) {
-    assertm(new_mat.size() == number_of_rows_, "wrong number of rows");
-    assertm(new_mat[0].size() == number_of_columns_,
-        "wrong number of columns");
+    if (new_mat.size() != number_of_rows_) {
+        throw std::invalid_argument("BufferOfMatrices::Add_data: wrong number of rows");
+    }
+    if (new_mat[0].size() != number_of_columns_) {
+        throw std::invalid_argument("BufferOfMatrices::Add_data: wrong number of columns");
+    }
     data_.push_back(new_mat);
     accumulated_size_ = data_.size();
 }
@@ -773,13 +777,17 @@ double Square(double x) {
 
 double Vector_2_norm(const vector<double>& vec) {
     // like np.linalg.norm(vec)
-    assertm(vec.size() == 2, "invalid dimentions");
+    if (vec.size() != 2) {
+        throw std::invalid_argument("Vector_2_norm: invalid dimensions (must be 2)");
+    }
     return sqrt(pow(vec[0], 2) + pow(vec[1], 2));
 }
 
 vector<double> Norm_nX2_array(const vector<vector<double>>& nX2_array) {
     // like np.linalg.norm(nX2_array, axis=1)
-    assertm(nX2_array[0].size() == 2, "invalid dimentions");
+    if (nX2_array.empty() || nX2_array[0].size() != 2) {
+        throw std::invalid_argument("Norm_nX2_array: invalid dimensions (must be nx2)");
+    }
     vector<double> arr_norm;
     for (int i = 0; i < nX2_array.size(); i++) {
         arr_norm.push_back(Vector_2_norm(nX2_array[i]));
@@ -788,7 +796,9 @@ vector<double> Norm_nX2_array(const vector<vector<double>>& nX2_array) {
 }
 
 vector<double> Quaternion2euler(const vector<double>& q) {
-    assertm(q.size() == 4, "quaternion must have 4 elements");
+    if (q.size() != 4) {
+        throw std::invalid_argument("Quaternion2euler: quaternion must have 4 elements");
+    }
     double w = q[0];
     double x = q[1];
     double y = q[2];

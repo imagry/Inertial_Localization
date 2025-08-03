@@ -6,7 +6,6 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include <iostream>
 #include <fstream>
 #include <cmath>
-#include <cassert>  // for assertion
 #include <filesystem>
 #include <algorithm>
 #include <vector>
@@ -30,8 +29,6 @@ using Eigen::Vector2d;
 using Eigen::RowVector3d;
 using Eigen::Sequential;
 using std::vector;
-#define assertm(exp, msg) assert(((void)msg, exp))
-// #define _USE_MATH_DEFINES
 typedef Eigen::Spline<double, 1, 2> Spline1D;
 typedef Eigen::SplineFitting<Spline1D> SplineFitting1D;
 
@@ -81,7 +78,9 @@ RowVectorXd ConvertVectorToEigenRowVector(const std::vector<double> &vec) {
     return vec_eigen;
 }
 double VectorNorm2D(const std::vector<double> &vec2d) {
-    assert(vec2d.size() == 2);
+    if (vec2d.size() != 2) {
+        throw std::invalid_argument("VectorNorm2D: Input vector must have exactly 2 elements");
+    }
     double vec_norm = sqrt(pow(vec2d[0], 2) + pow(vec2d[1], 2));
     return vec_norm;
 }
@@ -187,7 +186,9 @@ Eigen::Matrix<double, Dynamic, 2> ProjectPoints2D(
     T12 is the affine transformation matrix from CS1 to CS2
     points is an nX2 array.
     */
-    assert(points.rows() > 0);
+    if (points.rows() <= 0) {
+        throw std::invalid_argument("ProjectPoints2D: Input points matrix must have at least one row");
+    }
     int num_points = points.rows();
     Eigen::Matrix<double, 3, Eigen::Dynamic> points_homo;
     //    points_homo = Eigen::Matrix<double, 3, Eigen::Dynamic>::Zero(3,
