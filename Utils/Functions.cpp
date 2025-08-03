@@ -63,12 +63,12 @@ VectorXd ConvertVectorToEigen(const std::vector<double> &vec) {
     for (int i = 0; i < vec.size(); i++) vec_eigen[i] = vec[i];
     return vec_eigen;
 }
-std::vector<double> ConverteigenToVecor(const VectorXd &vec_eigen) {
+std::vector<double> ConvertEigenToVector(const VectorXd &vec_eigen) {
     std::vector<double> vec(vec_eigen.size());
     for (int i = 0; i < vec_eigen.size(); i++) vec[i] = vec_eigen[i];
     return vec;
 }
-std::vector<double> ConverteigenToVecor(const RowVectorXd &vec_eigen) {
+std::vector<double> ConvertEigenToVector(const RowVectorXd &vec_eigen) {
     std::vector<double> vec(vec_eigen.size());
     for (int i = 0; i < vec_eigen.size(); i++) vec[i] = vec_eigen[i];
     return vec;
