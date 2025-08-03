@@ -334,3 +334,111 @@ class AttitudeEstimator {
   * In `UpdateFrontAxlePosition`: Changed `this->update_time_ = clock;` to `update_time_ = clock;`
   * In commented code in `UpdatePosition`: Changed `this->update_time_ = clock;` to `update_time_ = clock;` for consistency
 * **Files Modified:** `Utils/short_term_localization.cpp`
+
+### 2025-08-03: Analysis of SpeedEstimators Component
+
+* **Action:** Performed an analysis of Utils/SpeedEstimators.hpp and Utils/SpeedEstimators.cpp for code quality and potential issues.
+* **Details:** Reviewed the SpeedEstimators component which implements different algorithms for vehicle speed estimation. The analysis focused on code structure, naming conventions, and documentation.
+* **Files Analyzed:** `Utils/SpeedEstimators.hpp`, `Utils/SpeedEstimators.cpp`
+
+### 2025-08-03: Include Order Improvements for SpeedEstimators Component
+
+* **Action:** Analyzed include order in SpeedEstimators.hpp and SpeedEstimators.cpp and prepared recommendations according to Google C++ Style Guide.
+* **Details:** According to the Google C++ Style Guide, includes should be ordered as follows:
+  1. Related header (i.e., SpeedEstimators.hpp for SpeedEstimators.cpp)
+  2. C system headers (e.g., <math.h>)
+  3. C++ standard library headers (e.g., <string>, <vector>)
+  4. Other libraries' headers (e.g., Eigen)
+  5. Your project's headers
+  
+  **Proposed changes for SpeedEstimators.cpp:**
+```cpp
+/* Copyright (c) 2024 Imagry. All Rights Reserved.
+Unauthorized copying of this file, via any medium is strictly prohibited.
+Proprietary and confidential.
+Created on Thu Nov 28 2024 by Dor Siman Tov
+*/
+
+#include "SpeedEstimators.hpp"
+
+#include <cmath>  // instead of math.h
+
+#include <iostream>
+#include <mutex>
+#include <string>
+#include <vector>
+
+#include <Eigen/Dense>
+
+#include "units.hpp"
+```
+
+* **Files Analyzed:** `Utils/SpeedEstimators.cpp`
+
+### 2025-08-03: Naming Conventions in SpeedEstimators Component
+
+* **Action:** Analyzed naming conventions in the SpeedEstimators component.
+* **Details:** Identified several naming inconsistencies:
+  * Member variables in the KalmanFilter class like `IMU_ACC_NOISE_DENSITY_` use all-caps which is typically reserved for constants, not member variables.
+  * According to Google C++ Style Guide, constants should be named with a leading k followed by mixed case (e.g., kImuAccNoiseDensity).
+  * Class member variables correctly use trailing underscores.
+  * Function names use CamelCase, which is consistent with the style guide.
+  
+* **Files Analyzed:** `Utils/SpeedEstimators.hpp`, `Utils/SpeedEstimators.cpp`
+
+### 2025-08-03: Documentation Improvements for SpeedEstimators Component
+
+* **Action:** Identified documentation gaps in the SpeedEstimators component.
+* **Details:** The SpeedEstimators module lacks proper documentation for its classes and methods. Adding Doxygen-style comments similar to those in AHRS.hpp would improve code readability and maintainability.
+  
+  **Proposed documentation for SpeedEstimator base class:**
+```cpp
+/**
+ * @brief Abstract base class for vehicle speed estimation.
+ * 
+ * This class defines the interface for different speed estimation strategies.
+ * Each concrete implementation provides a specific algorithm for estimating
+ * vehicle speed based on sensor data.
+ */
+class SpeedEstimator {
+ public:
+    virtual ~SpeedEstimator() = default;
+    
+    /**
+     * @brief Updates the estimator with a new IMU sample.
+     * 
+     * @param sample Pointer to the new IMU sample
+     */
+    virtual void UpdateIMU(const ImuSample* sample) = 0;
+    
+    /**
+     * @brief Updates the estimator with new wheel odometry data.
+     * 
+     * @param sample Pointer to the new wheel odometry sample
+     */
+    virtual void UpdateRearSpeeds(const WheelOdometrySample* sample) = 0;
+    
+    /**
+     * @brief Estimates the vehicle state based on current sensor data.
+     * 
+     * @param clock Current timestamp
+     */
+    virtual void UpdateState(PreciseSeconds clock) = 0;
+    
+    /**
+     * @brief Gets the current estimated vehicle speed.
+     * 
+     * @return PreciseMps Estimated speed in meters per second
+     */
+    virtual PreciseMps GetEstimatedSpeed() = 0;
+    
+    /**
+     * @brief Checks if the current speed estimate is valid.
+     * 
+     * @return bool True if the estimate is valid, false otherwise
+     */
+    virtual bool IsEstimatedSpeedValid() = 0;
+};
+```
+
+* **Files Analyzed:** `Utils/SpeedEstimators.hpp`
