@@ -442,3 +442,108 @@ class SpeedEstimator {
 ```
 
 * **Files Analyzed:** `Utils/SpeedEstimators.hpp`
+
+### 2025-08-03: Analysis of Classes Component
+
+* **Action:** Performed an analysis of Utils/Classes.hpp for code quality and potential issues.
+* **Details:** Reviewed the Classes component which provides various utility classes for signal processing, filtering, and data handling. The analysis focused on code structure, naming conventions, and documentation.
+* **Files Analyzed:** `Utils/Classes.hpp`
+
+### 2025-08-03: Naming Conventions in Classes Component
+
+* **Action:** Analyzed naming conventions in the Classes component.
+* **Details:** Identified several naming inconsistencies:
+  * Class names use a mix of snake_case (`Buffer_any`) and CamelCase (`FirstOrderLPF`), while Google C++ Style Guide recommends CamelCase for all class names.
+  * Method names generally follow CamelCase which is consistent with the style guide, though some like `Update` and `Reset` start with capitals which should be reserved for classes.
+  * Member variables consistently use trailing underscores, which is correct.
+  
+  **Proposed changes for class names:**
+  * `Buffer_any` → `BufferAny`
+  * `Delay_any` → `DelayAny`
+  
+* **Files Analyzed:** `Utils/Classes.hpp`
+
+### 2025-08-03: Implementation Patterns in Classes Component
+
+* **Action:** Analyzed implementation patterns in the Classes component.
+* **Details:** Several classes in Classes.hpp have their method implementations directly in the header file. While this is acceptable for small, performance-critical methods, it can lead to longer compilation times and potential ODR (One Definition Rule) violations if the header is included in multiple translation units.
+
+  Recommendation: Consider moving larger method implementations to a separate .cpp file, especially for methods like `StepTest` in the `RateLimiter` class that are not performance-critical.
+  
+* **Files Analyzed:** `Utils/Classes.hpp`
+
+### 2025-08-03: Documentation Improvements for Classes Component
+
+* **Action:** Identified documentation gaps in the Classes component.
+* **Details:** Documentation is inconsistent across the file. Some classes have good comments (like `FirstOrderLPF`), while others have minimal or no documentation.
+  
+  **Proposed documentation for Buffer_any class:**
+```cpp
+/**
+ * @brief A generic buffer class that can store any type of values.
+ * 
+ * This class implements a circular buffer with a fixed maximum size.
+ * When the buffer is full, adding new values removes the oldest ones.
+ */
+struct Buffer_any {
+    std::deque<std::any> values_;  ///< Container for the buffer values
+    int maximal_size_;             ///< Maximum number of values the buffer can hold
+    
+    /**
+     * @brief Constructs a buffer with the specified maximum size.
+     * 
+     * @param max_size Maximum number of values the buffer can hold
+     */
+    explicit Buffer_any(int max_size);
+    
+    /**
+     * @brief Adds a new value to the buffer.
+     * 
+     * If the buffer is already at maximum capacity, the oldest value is removed.
+     * 
+     * @param new_value Value to add to the buffer
+     */
+    void Update(std::any new_value);
+    
+    /**
+     * @brief Gets the value at the specified index.
+     * 
+     * @param idx Index of the value to retrieve
+     * @return std::any Value at the specified index
+     */
+    std::any GetValue(int idx);
+    
+    /**
+     * @brief Gets the oldest value in the buffer.
+     * 
+     * @return std::any The first (oldest) value in the buffer
+     */
+    std::any GetFirst();
+    
+    /**
+     * @brief Gets the newest value in the buffer.
+     * 
+     * @return std::any The last (newest) value in the buffer
+     */
+    std::any GetLast();
+    
+    /**
+     * @brief Finds the value closest to the target.
+     * 
+     * Only works for buffers containing double values.
+     * 
+     * @param target Value to find the closest match for
+     * @return std::tuple<int, double> Index and value of the closest match
+     */
+    std::tuple<int, double> ClosestValue(double target);
+    
+    /**
+     * @brief Gets the current number of values in the buffer.
+     * 
+     * @return int Number of values currently stored
+     */
+    int Size();
+};
+```
+
+* **Files Analyzed:** `Utils/Classes.hpp`
