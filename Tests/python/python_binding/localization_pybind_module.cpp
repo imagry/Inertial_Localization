@@ -46,7 +46,7 @@ PYBIND11_MODULE(localization_pybind_module, m) {
         .def("UpdateRearLeftSpeed", &AHRSLocHandler::UpdateRearLeftSpeed)
         .def("UpdateSteeringWheel", &AHRSLocHandler::UpdateSteeringWheel)
         .def("UpdateHeading", &AHRSLocHandler::UpdateHeading)
-        .def("ResetVehicleState", &AHRSLocHandler::ResetVehicleState)
+        .def("UpdateVehicleState", &AHRSLocHandler::UpdateVehicleState)
         .def("GetPosition", &AHRSLocHandler::GetPosition)
         .def("GetVehicleHeading", &AHRSLocHandler::GetVehicleHeading);
 }

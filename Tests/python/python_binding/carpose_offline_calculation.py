@@ -135,7 +135,7 @@ def main():
     # Initialize vehicle state (position at origin, zero heading)
     initial_time = 0.0  # Start at time 0
     initial_state = [0.0, 0.0, external_car_pose["psi"][0], 0.0]  # [x, y, heading, velocity]
-    loc_handler.ResetVehicleState(initial_time, initial_state)
+    loc_handler.UpdateVehicleState(initial_time, initial_state)
     
     # Prepare for tracking estimated car pose
     car_pose = {

@@ -3,8 +3,6 @@
  * Proprietary and confidential.
  */
 
-#pragma once
-
 #include "control_api_wrapper.h"
 
 #include <memory>
@@ -120,7 +118,7 @@ std::shared_ptr<AHRSLocHandler> CreateAHRSLocHandlerInstance(
 
     const std::vector<double> kDefaultVehicleState{0, 0, 0, 0};
 
-    ahrs_handler_instance->ResetVehicleState(-1.0, kDefaultVehicleState);
+    ahrs_handler_instance->UpdateVehicleState(-1.0, kDefaultVehicleState);
     return ahrs_handler_instance;
 }
 
@@ -138,7 +136,7 @@ static std::shared_ptr<AHRSLocHandler> CreateAHRSLocHandlerInstance(
 
     const std::vector<double> kDefaultVehicleState{0, 0, 0, 0};
 
-    ahrs_handler_instance->ResetVehicleState(-1.0, kDefaultVehicleState);
+    ahrs_handler_instance->UpdateVehicleState(-1.0, kDefaultVehicleState);
     return ahrs_handler_instance;
 }
 

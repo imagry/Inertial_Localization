@@ -7,6 +7,32 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "ahrs_loc_handler.hpp"
 #include "Utils/SpeedEstimators.hpp"
 
+// Private helper method to initialize speed estimator based on config
+void AHRSLocHandler::InitializeSpeedEstimator() {
+    // Speed estimation modes:
+    //  - "kalman" for Kalman filter using rear-wheels speeds and IMU
+    //  - "rear_average" for the average of rear-wheels speeds
+    //  - "default" (or anything else) for default wheel odometry
+    if (localization_config_["vehicle_speed_estimation_mode"] == "kalman") {
+        speed_estimator_ = std::make_unique<KalmanFilter>(
+            static_cast<double>(
+                localization_config_["imu_acc_noise_density"]),
+            static_cast<double>(
+                localization_config_["imu_acc_bias_instability"]),
+            static_cast<double>(localization_config_["wheel_speed_noise_std"]),
+            static_cast<PreciseMps>(0.0),
+            static_cast<Mps2Precise>(0.0),
+            static_cast<double>(1.0),
+            static_cast<double>(1.0)
+        );
+    } else if (
+        localization_config_["vehicle_speed_estimation_mode"] == "rear_average") {
+        speed_estimator_ = std::make_unique<RearAverage>();
+    } else {
+        speed_estimator_ = nullptr;
+    }
+}
+
 AHRSLocHandler::AHRSLocHandler(const json& vehicle_config,
                                const json& localization_config)
     : vehicle_config_(vehicle_config),
@@ -21,30 +47,8 @@ AHRSLocHandler::AHRSLocHandler(const json& vehicle_config,
       debug_mode_(localization_config_["debug_mode"]),
       debug_obj_(localization_config_["debug_mode"],
                  localization_config_["control_modul_dir"]) {
-        // Speed estimation modes:
-        //  - "kalman" for Kalman filter using rear-wheels speeds and IMU
-        //  - "rear_average" for the average of rear-wheels speeds
-        //  - "default" (or anything else) for default wheel odometry
-        if (localization_config_["vehicle_speed_estimation_mode"] == "kalman") {
-            speed_estimator_ = std::make_unique<KalmanFilter>(
-                static_cast<double>(
-                    localization_config_["imu_acc_noise_density"]),
-                static_cast<double>(
-                    localization_config_["imu_acc_bias_instability"]),
-                static_cast<double>(localization_config_["wheel_speed_noise_std"]),
-                static_cast<PreciseMps>(0.0),
-                static_cast<Mps2Precise>(0.0),
-                static_cast<double>(1.0),
-                static_cast<double>(1.0)
-            );
-        } else if (
-            localization_config_[
-                "vehicle_speed_estimation_mode"] == "rear_average") {
-                speed_estimator_ = std::make_unique<RearAverage>();
-            } else {
-                speed_estimator_ = nullptr;
-            }
-    }
+    InitializeSpeedEstimator();
+}
 AHRSLocHandler::AHRSLocHandler(const std::string& vehicle_config_path,
                         const std::string& control_config_path)
     : vehicle_config_(json::parse(std::ifstream(vehicle_config_path))),
@@ -60,30 +64,8 @@ AHRSLocHandler::AHRSLocHandler(const std::string& vehicle_config_path,
       debug_mode_(localization_config_["debug_mode"]),
       debug_obj_(localization_config_["debug_mode"],
                  localization_config_["control_modul_dir"]) {
-        // Speed estimation modes:
-        //  - "kalman" for Kalman filter using rear-wheels speeds and IMU
-        //  - "rear_average" for the average of rear-wheels speeds
-        //  - "default" (or anything else) for default wheel odometry
-        if (localization_config_["vehicle_speed_estimation_mode"] == "kalman") {
-            speed_estimator_ = std::make_unique<KalmanFilter>(
-                static_cast<double>(
-                    localization_config_["imu_acc_noise_density"]),
-                static_cast<double>(
-                    localization_config_["imu_acc_bias_instability"]),
-                static_cast<double>(localization_config_["wheel_speed_noise_std"]),
-                static_cast<double>(0.0),
-                static_cast<double>(0.0),
-                static_cast<double>(1.0),
-                static_cast<double>(1.0)
-            );
-        } else if (
-            localization_config_[
-                "vehicle_speed_estimation_mode"] == "rear_average") {
-                speed_estimator_ = std::make_unique<RearAverage>();
-            } else {
-                speed_estimator_ = nullptr;
-            }
-    }
+    InitializeSpeedEstimator();
+}
 
 void AHRSLocHandler::UpdateIMU(const ImuSample& sample, PreciseSeconds clock) {
     localization_obj_.UpdateIMU(sample);    // this is used by aidriver,
@@ -169,13 +151,8 @@ void AHRSLocHandler::UpdateSpeed(PreciseMps speed, PreciseSeconds clock) {
     { // use speed odometry 
         localization_obj_.UpdateSpeed(speed * 
             double(localization_config_["speed_measurement_scale_factor"]));
-        std::lock_guard<std::mutex> guard(debug_obj_lock_);
-        debug_obj_.vehicle_speed_.push_back(std::make_pair(speed, clock));
     } else { // this call is followed by a rear wheel update
         localization_obj_.UpdateSpeed(speed_estimator_->GetEstimatedSpeed());
-        std::lock_guard<std::mutex> guard(debug_obj_lock_);
-        debug_obj_.vehicle_speed_.push_back(std::make_pair(
-            speed_estimator_->GetEstimatedSpeed(), clock));
     }
     UpdatePosition(clock);
 }
@@ -196,45 +173,52 @@ void AHRSLocHandler::UpdateHeading(PreciseRadians psi, PreciseSeconds clock)  {
 bool AHRSLocHandler::UpdatePosition(PreciseSeconds clock) {
     std::lock_guard<std::mutex> guard(UpdatePosition_lock_);
     LocState state = localization_obj_.State();
-    if (!std::isnan(state.psi_) &&
-        !std::isnan(state.speed_) &&
-        !std::isnan(state.delta_)) {
+    
+    // Check for NaN values in critical state variables
+    bool has_valid_state = !std::isnan(state.psi_) &&
+                           !std::isnan(state.speed_) &&
+                           !std::isnan(state.delta_);
+                           
+    if (!has_valid_state) {
+        std::cerr << "Warning: Invalid state detected in UpdatePosition. "
+                  << "psi=" << state.psi_ << ", speed=" << state.speed_ 
+                  << ", delta=" << state.delta_ << std::endl;
+        return false;
+    }
+    
+    try {
         localization_obj_.UpdateFrontAxlePosition(clock);
-        std::vector<double> x_y_psi{state.pos_[0], state.pos_[1], state.psi_};
-        std::pair<std::vector<double>, double>
-            vehicle_state_sample;  // <<x,y,psi>, time>
-        vehicle_state_sample.first = x_y_psi;
-        vehicle_state_sample.second = clock;
-
-        std::pair<PreciseRadians, PreciseSeconds>
-            vehicle_heading_sample;  // <psi, time>
-        vehicle_heading_sample.first = state.psi_;
-        vehicle_heading_sample.second = clock;
-        {
-            std::lock_guard<std::mutex> guard(debug_obj_lock_);
-            debug_obj_.vehicle_state_.push_back(vehicle_state_sample);
-        }
+        LocState updated_state = localization_obj_.State(); // Use a different variable name to avoid shadowing
+        
+        // Write debug info to file if debug mode is enabled
         if (debug_mode_) {
             debug_obj_.WriteLocalizationStatesToFile(
-                clock, state.speed_, state.delta_, state.pos_[0],
-                state.pos_[1], state.psi_);
+                clock, updated_state.speed_, updated_state.delta_, updated_state.pos_[0],
+                updated_state.pos_[1], updated_state.psi_);
         }
+        
         return true;
-    } else {
+    } catch (const std::exception& e) {
+        std::cerr << "Exception in UpdatePosition: " << e.what() << std::endl;
         return false;
     }
 }
 
 void AHRSLocHandler::UpdateVehicleState(PreciseSeconds clock,
                                    const std::vector<double>& state) {
-    localization_obj_.ResetVehicleState(clock, {{state[0], state[1]},
-                                                 state[2], 0, state[3]});                                            
+    // Check if the state vector has the correct size
+    if (state.size() < 4) {
+        std::cerr << "Warning: Insufficient state data for vehicle state update" << std::endl;
+        return;
+    }
+    
+    // Create a LocState object from the provided state vector
+    LocState loc_state = {{state[0], state[1]}, state[2], 0, state[3]};
+    
+    // Reset the vehicle state
+    localization_obj_.ResetVehicleState(clock, loc_state);
 }
-void AHRSLocHandler::ResetVehicleState(PreciseSeconds clock,
-                                    const std::vector<double>& state) {
-    localization_obj_.ResetVehicleState(clock, {{state[0], state[1]},
-                                            state[2], 0, state[3]});                                                  
-}
+
 std::vector<PreciseMeters> AHRSLocHandler::GetPosition() const {
     return localization_obj_.State().pos_;
 }

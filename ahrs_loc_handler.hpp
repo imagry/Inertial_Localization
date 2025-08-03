@@ -38,10 +38,11 @@ class AHRSLocHandler {
     void UpdateSteeringWheel(PreciseRadians steering_wheel_angle,
                              PreciseSeconds clock);
     void UpdateHeading(PreciseRadians psi, PreciseSeconds clock);
+    
+    // Set or reset the vehicle state.
     void UpdateVehicleState(PreciseSeconds clock,
                            const std::vector<double>& state);
-    void ResetVehicleState(PreciseSeconds clock,
-                            const std::vector<double>& state);
+                           
     std::vector<PreciseMeters> GetPosition() const;
     PreciseRadians GetVehicleHeading() const;
     std::string GetVehicleHeadingEstimationMode() const;
@@ -58,4 +59,7 @@ private:
     std::mutex UpdatePosition_lock_;
     bool debug_mode_;
     LocalizationDebugStates debug_obj_;
+    
+    // Helper method to initialize the appropriate speed estimator
+    void InitializeSpeedEstimator();
 };

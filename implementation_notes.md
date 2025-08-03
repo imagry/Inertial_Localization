@@ -787,3 +787,20 @@ struct Buffer_any {
 ```
 
 * **Files Analyzed:** `Utils/Classes.hpp`
+### 2025-08-03: Eliminated Deprecated ResetVehicleState Method
+
+* **Action:** Removed the deprecated `ResetVehicleState` method from `AHRSLocHandler` class
+* **Details:**
+  * Simplified the API by using only `UpdateVehicleState` method for both regular updates and state resets
+  * Updated all code references to use the consolidated method:
+    * Python bindings in `Tests/python/python_binding/localization_pybind_module.cpp`
+    * Test scripts in `Tests/python/python_binding/carpose_offline_calculation.py`
+    * Control API wrapper in `wrapper/control_api_wrapper.cpp`
+  * Verified full functionality with the regression test suite
+  * Confirmed no performance impact while improving code maintainability
+* **Files Modified:**
+  * `ahrs_loc_handler.hpp`: Removed method declaration
+  * `ahrs_loc_handler.cpp`: Updated implementation
+  * `Tests/python/python_binding/localization_pybind_module.cpp`: Updated Python bindings
+  * `Tests/python/python_binding/carpose_offline_calculation.py`: Updated test script
+  * `wrapper/control_api_wrapper.cpp`: Updated API wrapper implementation
