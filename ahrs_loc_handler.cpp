@@ -104,14 +104,14 @@ void AHRSLocHandler::UpdateIMU(const ImuSample& sample, PreciseSeconds clock) {
     //notice gyro integration is done using imu sample timestamp
     AHRS_obj_.UpdateGravity({sample.acc_.x, sample.acc_.y, sample.acc_.z});
     if (localization_config_["vehicle_heading_estimation_mode"] == "IMU") {
-        vector<double> euler = rot_mat2euler(AHRS_obj_.Rnb);
+        vector<double> euler = Rot_mat2euler(AHRS_obj_.Rnb_);
         UpdateHeading(euler[2], clock);
         /*this function updates the localization heading and updates the position,
         the used clock is the OS clock */
 
     }
     if (debug_mode_) {
-        vector<double> euler = rot_mat2euler(AHRS_obj_.Rnb);
+        vector<double> euler = Rot_mat2euler(AHRS_obj_.Rnb_);
         debug_obj_.WriteAHRSStatesToFile(clock, sample.time_stamp, 
             euler[0], euler[1], euler[2], 
             sample.roll_, sample.pitch_, sample.yaw_);

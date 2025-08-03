@@ -25,9 +25,9 @@ using Eigen::DiagonalMatrix;
 using Eigen::AngleAxisd;
 using Eigen::Quaterniond;
 
-void SegmentIMURecording::compute_dt() {
-    std::vector<double> t_diff = diff(this->time_IMU);
-    this->dt = mean(t_diff);
+void SegmentIMURecording::Compute_dt() {
+    std::vector<double> t_diff = Diff(time_IMU_);
+    dt_ = Mean(t_diff);
 }
 SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
     vector<string> row;
@@ -128,31 +128,31 @@ SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
             istringstream ss_2(row[timestamp_ind]);
             ss_2 >> time_sample;
             if (time_sample > timestamp_thresh) {
-                this->time_ori.push_back(time_sample * time_factor);
+                this->time_ori_.push_back(time_sample * time_factor);
                 if (file_fmt == trc || file_fmt == trc2) {
                     double angle_factor = -M_PI / 180;
-                    this->psi.push_back(
+                    this->psi_.push_back(
                         stod(row[9]) * angle_factor);   // azimuth
-                    this->phi.push_back(
+                    this->phi_.push_back(
                         stod(row[10]) * angle_factor);  // pitch
-                    this->theta.push_back(
+                    this->theta_.push_back(
                         stod(row[11]) * angle_factor);  // roll
                 } else if (file_fmt == ridi) {
                     vector<double> q = { stod(row[20])/*w*/,
                     stod(row[21])/*x*/,
                     stod(row[22])/*y*/,
                     stod(row[23])/*z*/ };
-                    vector<double> roll_pitch_yaw = quaternion2euler(q);
-                    this->psi.push_back(roll_pitch_yaw[2]);     // azimuth
-                    this->theta.push_back(roll_pitch_yaw[1]);   // roll
-                    this->phi.push_back(roll_pitch_yaw[0]);     // pitch
+                    vector<double> roll_pitch_yaw = Quaternion2euler(q);
+                    this->psi_.push_back(roll_pitch_yaw[2]);     // azimuth
+                    this->theta_.push_back(roll_pitch_yaw[1]);   // roll
+                    this->phi_.push_back(roll_pitch_yaw[0]);     // pitch
                 } else if (file_fmt == aidriver) {
                     double angle_factor = M_PI / 180;
-                    this->psi.push_back(
+                    this->psi_.push_back(
                         stod(row[7]) * angle_factor);   // azimuth
-                    this->phi.push_back(
+                    this->phi_.push_back(
                         stod(row[8]) * angle_factor);   // pitch
-                    this->theta.push_back(
+                    this->theta_.push_back(
                         stod(row[9]) * angle_factor);   // roll
                 }
             }
@@ -162,99 +162,99 @@ SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
             } else {
                 gyro_SF = 1;
             }
-            if (this->time_ori.size() > 0) {
+            if (this->time_ori_.size() > 0) {
                 istringstream ss(row[timestamp_ind]);
                 ss >> time_sample;
-                this->time_IMU.push_back(time_sample * time_factor);
-                this->gyro.push_back({ stod(row[gyro_x_ind]) * gyro_SF,
+                this->time_IMU_.push_back(time_sample * time_factor);
+                this->gyro_.push_back({ stod(row[gyro_x_ind]) * gyro_SF,
                                        stod(row[gyro_y_ind]) * gyro_SF,
                                        stod(row[gyro_z_ind]) * gyro_SF});
-                this->acc.push_back({ stod(row[acc_x_ind]),
+                this->acc_.push_back({ stod(row[acc_x_ind]),
                     stod(row[acc_y_ind]),
                     stod(row[acc_z_ind]) });
             }
         }
-        std::cout << "Read " << this->time_IMU.size() <<
+        std::cout << "Read " << this->time_IMU_.size() <<
             " lines from IMU file : " << file_path << endl;
     } else {
         std::cout << "Could not open IMU file: " << file_path << endl;
     }
-    this->time_IMU = add_scalar_to_vector(this->time_IMU, -this->time_IMU[0]);
-    this->number_of_IMU_samples = static_cast<int>(this->time_IMU.size());
-    compute_dt();
+    this->time_IMU_ = Add_scalar_to_vector(this->time_IMU_, -this->time_IMU_[0]);
+    number_of_IMU_samples_ = static_cast<int>(time_IMU_.size());
+    Compute_dt();
 }
 AttitudeEstimator::AttitudeEstimator(double dt, double Ka,
                                      std::string coor_sys_convention) {
-    this->dt = dt;
+    dt_ = dt;
     // std::memcpy(this->Rnb, Rnb, sizeof(double) * 9);
     Matrix3d Rnb;
-    this->Rnb << 1, 0, 0,
-                 0, 1, 0,
-                 0, 0, 1;
-    this->Kgx = Ka;
-    this->Kgy = Ka;
-    this->Kgz = Ka;
-    vector<double> euler = rot_mat2euler(this->Rnb);
-    this->phi = euler[0];
-    this->theta = euler[1];
-    this->psi = euler[2];
-    this->g = 9.81;
-    update_time = 0;
+    Rnb_ << 1, 0, 0,
+            0, 1, 0,
+            0, 0, 1;
+    Kgx_ = Ka;
+    Kgy_ = Ka;
+    Kgz_ = Ka;
+    vector<double> euler = Rot_mat2euler(Rnb_);
+    phi_ = euler[0];
+    theta_ = euler[1];
+    psi_ = euler[2];
+    g_ = 9.81;
+    update_time_ = 0;
     coor_sys_convention_ = coor_sys_convention;
     if (coor_sys_convention == "NED") {
-        this->gb = { 0, 0, -1 };
-        this->gn = { 0, 0, -1 };
-        this->mb = { 1, 0, 0 };
-        this->mn = { 1, 0, 0 };
+        gb_ = { 0, 0, -1 };
+        gn_ = { 0, 0, -1 };
+        mb_ = { 1, 0, 0 };
+        mn_ = { 1, 0, 0 };
     } else if (coor_sys_convention == "ENU") {
-        this->gb = { 0, 0, 1 };
-        this->gn = { 0, 0, 1 };
-        this->mb = { 0, 1, 0 };
-        this->mn = { 0, 1, 0 };
+        gb_ = { 0, 0, 1 };
+        gn_ = { 0, 0, 1 };
+        mb_ = { 0, 1, 0 };
+        mn_ = { 0, 1, 0 };
     } else {
         std::cout << "unknown coordinate system convention" << endl;
     }
 }
 void AttitudeEstimator::GyroPromotion(vector<double> gyro, double clock) {
     if (clock_initialized_) {
-        dt = clock - update_time;
+        dt_ = clock - update_time_;
     } else {
         clock_initialized_ = true;
     }
-    update_time = clock;
+    update_time_ = clock;
     Matrix3d omega_nb_b = Vec2SkewSimetric(gyro);
-    Matrix3d Rnb_dot_m = this->Rnb * omega_nb_b;
-    Matrix3d Rnb_m = this->Rnb + Rnb_dot_m * this->dt;
-    this->Rnb = OrthonormalizeRotationMatrix(Rnb_m);
+    Matrix3d Rnb_dot_m = Rnb_ * omega_nb_b;
+    Matrix3d Rnb_m = Rnb_ + Rnb_dot_m * dt_;
+    Rnb_ = OrthonormalizeRotationMatrix(Rnb_m);
 }
 void AttitudeEstimator::UpdateGravity(vector<double> acc) {
-    Vector3d gb_m = this->Rnb.transpose() * this->gn;
-    Vector3d acc_eigen = convert_vector_to_eigen(acc);
-    Vector3d e = acc_eigen / this->g - gb_m;
-    DiagonalMatrix<double, 3> Kg_mat(this->Kgx, this->Kgy, this->Kgz);
+    Vector3d gb_m = Rnb_.transpose() * gn_;
+    Vector3d acc_eigen = Convert_vector_to_eigen(acc);
+    Vector3d e = acc_eigen / g_ - gb_m;
+    DiagonalMatrix<double, 3> Kg_mat(Kgx_, Kgy_, Kgz_);
     Vector3d gb_p = gb_m + Kg_mat * e;
     gb_p /= gb_p.norm();
-    Vector3d mb = this->Rnb.transpose() * this->mn;
-    Matrix3d Cnb = TRIAD(gb_p, mb / mb.norm(), this->gn, mn / mn.norm());
-    this->Rnb = Cnb;
-    this->gb = this->Rnb.transpose() * this->gn;
+    Vector3d mb = Rnb_.transpose() * mn_;
+    Matrix3d Cnb = TRIAD(gb_p, mb / mb.norm(), gn_, mn_ / mn_.norm());
+    Rnb_ = Cnb;
+    gb_ = Rnb_.transpose() * gn_;
 }
 void AttitudeEstimator::InitializeRotation(double phi0, double theta0,
     double psi0) {
     Matrix3d R_0;
     R_0 = AngleAxisd(psi0, Vector3d::UnitZ()) * AngleAxisd(theta0,
         Vector3d::UnitY()) * AngleAxisd(phi0, Vector3d::UnitX());
-    Rnb = R_0;
+    Rnb_ = R_0;
 }
-void AttitudeEstimator::run_exp(SegmentIMURecording exp,
+void AttitudeEstimator::Run_exp(SegmentIMURecording exp,
     string file_name, double initial_heading) {
-    double phi_0 = exp.phi[0];
-    double theta_0 = exp.theta[0];
-    double psi_0 = initial_heading;     // exp.psi[0];
+    double phi_0 = exp.phi_[0];
+    double theta_0 = exp.theta_[0];
+    double psi_0 = initial_heading;     // exp.psi_[0];
     Matrix3d R_0;
     R_0 = AngleAxisd(psi_0, Vector3d::UnitZ()) * AngleAxisd(theta_0,
         Vector3d::UnitY()) * AngleAxisd(phi_0, Vector3d::UnitX());
-    this->Rnb = R_0;
+    Rnb_ = R_0;
 
     vector<double> time_IMU;
     vector<double> phi_hat;
@@ -276,29 +276,29 @@ void AttitudeEstimator::run_exp(SegmentIMURecording exp,
     vector<double> Rnb_32;
     vector<double> Rnb_33;
 
-    for (int i = 0; i < exp.number_of_IMU_samples; i++) {
-        GyroPromotion(exp.gyro[i], exp.time_IMU[i]);
-        UpdateGravity(exp.acc[i]);
-        vector<double> euler = rot_mat2euler(this->Rnb);
-        time_IMU.push_back(exp.time_IMU[i]);
+    for (int i = 0; i < exp.number_of_IMU_samples_; i++) {
+        GyroPromotion(exp.gyro_[i], exp.time_IMU_[i]);
+        UpdateGravity(exp.acc_[i]);
+        vector<double> euler = Rot_mat2euler(Rnb_);
+        time_IMU.push_back(exp.time_IMU_[i]);
         phi_hat.push_back(euler[0]);
         phi_e.push_back(0);
         theta_hat.push_back(euler[1]);
         theta_e.push_back(0);
         psi_hat.push_back(euler[2]);
         psi_e.push_back(0);
-        grv_x.push_back(this->gb(0) * this->g);
-        grv_y.push_back(this->gb(1) * this->g);
-        grv_z.push_back(this->gb(2) * this->g);
-        Rnb_11.push_back(this->Rnb(0, 0));
-        Rnb_12.push_back(this->Rnb(0, 1));
-        Rnb_13.push_back(this->Rnb(0, 2));
-        Rnb_21.push_back(this->Rnb(1, 0));
-        Rnb_22.push_back(this->Rnb(1, 1));
-        Rnb_23.push_back(this->Rnb(1, 2));
-        Rnb_31.push_back(this->Rnb(2, 0));
-        Rnb_32.push_back(this->Rnb(2, 1));
-        Rnb_33.push_back(this->Rnb(2, 2));
+        grv_x.push_back(gb_(0) * g_);
+        grv_y.push_back(gb_(1) * g_);
+        grv_z.push_back(gb_(2) * g_);
+        Rnb_11.push_back(Rnb_(0, 0));
+        Rnb_12.push_back(Rnb_(0, 1));
+        Rnb_13.push_back(Rnb_(0, 2));
+        Rnb_21.push_back(Rnb_(1, 0));
+        Rnb_22.push_back(Rnb_(1, 1));
+        Rnb_23.push_back(Rnb_(1, 2));
+        Rnb_31.push_back(Rnb_(2, 0));
+        Rnb_32.push_back(Rnb_(2, 1));
+        Rnb_33.push_back(Rnb_(2, 2));
     }
     // prepare data for export to file
     std::vector<std::pair<std::string, std::vector<double>>> vals = {
@@ -312,9 +312,9 @@ void AttitudeEstimator::run_exp(SegmentIMURecording exp,
     };
 
     // Write the vector to CSV
-    write_csv(file_name, vals);
+    Write_csv(file_name, vals);
 }
-int ahrs_test() {
+int Ahrs_test() {
     std::filesystem::path current_path = std::filesystem::current_path();
     cout << "Current working directory: " << current_path << endl;
     // std::filesystem::path imu_file_path = current_path / "data" /
@@ -334,16 +334,16 @@ int ahrs_test() {
     SegmentIMURecording imu_data = SegmentIMURecording(imu_file_path);
     double initial_heading_y = 0.0;
     double initial_heading_x = initial_heading_y - M_PI / 2;
-    vector<double> psi_initialized = add_scalar_to_vector(imu_data.psi,
-        -imu_data.psi[0] + initial_heading_x);
+    vector<double> psi_initialized = Add_scalar_to_vector(imu_data.psi_,
+        -imu_data.psi_[0] + initial_heading_x);
     std::vector<std::pair<std::string, std::vector<double>>> vals = {
         {"psi", psi_initialized},
-        {"phi", imu_data.phi},
-        {"theta", imu_data.theta}
+        {"phi", imu_data.phi_},
+        {"theta", imu_data.theta_}
     };
     // Write the vector to CSV
-    // write_csv("data/hao_leg2-psi_phi_theta-cpp.csv", vals);
-    write_csv(current_path / "../data/temp_results"/"psi_phi_theta-cpp.csv",
+    // Write_csv("data/hao_leg2-psi_phi_theta-cpp.csv", vals);
+    Write_csv(current_path / "../data/temp_results"/"psi_phi_theta-cpp.csv",
         vals);
     Matrix3d Rnb;
     Rnb << 1, 0, 0,
@@ -353,11 +353,11 @@ int ahrs_test() {
     double Ka = 0.005;
     AttitudeEstimator AE_object = AttitudeEstimator(
         static_cast<double>(0.01), Ka, "NED");
-    AE_object.Rnb = Rnb;
-    // AE_object.run_exp(imu_data, "CPP_AHRS_results_on_hao_leg2.csv");
+    AE_object.Rnb_ = Rnb;
+    // AE_object.Run_exp(imu_data, "CPP_AHRS_results_on_hao_leg2.csv");
     std::filesystem::path output_file_path = current_path /
         "../data/temp_results"/"CPP_AHRS_results.csv";
-    AE_object.run_exp(imu_data, output_file_path, initial_heading_x);
+    AE_object.Run_exp(imu_data, output_file_path, initial_heading_x);
     // std::string system_cmd = "python ../Tests/python/plot_inputs.py --path "
     //         + output_file_path.string()
     //         + " --x time_IMU time_IMU time_IMU
@@ -371,136 +371,136 @@ int ahrs_test() {
     // "time_IMU,phi_hat,phi_e,theta_hat,theta_e,psi_hat,psi_e"
     return 0;
 }
-buffer_of_scalars::buffer_of_scalars(int window_size) {
-    this->window_size = window_size;
-    this->accumulated_size = 0;
+BufferOfScalars::BufferOfScalars(int window_size) {
+    window_size_ = window_size;
+    accumulated_size_ = 0;
 }
-void buffer_of_scalars::add_data(double new_value) {
-    this->data.push_back(new_value);
-    accumulated_size = this->data.size();
+void BufferOfScalars::Add_data(double new_value) {
+    data_.push_back(new_value);
+    accumulated_size_ = data_.size();
 }
-vector<double> buffer_of_scalars::get_data() {
+vector<double> BufferOfScalars::Get_data() {
     vector<double> result;
-    for (int i = 0; i < this->window_size; i++) {
-        result.push_back(this->data[0]);
-        this->data.erase(this->data.begin());
+    for (int i = 0; i < window_size_; i++) {
+        result.push_back(data_[0]);
+        data_.erase(data_.begin());
     }
-    accumulated_size = this->data.size();
+    accumulated_size_ = data_.size();
     return result;
 }
-void buffer_of_scalars::resest() {
-    for (int i = 0; i < this->accumulated_size; i++) {
-        this->data.pop_back();
+void BufferOfScalars::Reset() {
+    for (int i = 0; i < accumulated_size_; i++) {
+        data_.pop_back();
     }
-    accumulated_size = this->data.size();
+    accumulated_size_ = data_.size();
 }
 
 
-buffer_of_vectors::buffer_of_vectors(int window_size, int n_cols) {
-    this->window_size = window_size;
-    this->number_of_columns = n_cols;
-    this->accumulated_size = 0;
+BufferOfVectors::BufferOfVectors(int window_size, int n_cols) {
+    window_size_ = window_size;
+    number_of_columns_ = n_cols;
+    accumulated_size_ = 0;
 }
-void buffer_of_vectors::add_data(vector<double> new_line) {
-    assertm(new_line.size() == this->number_of_columns,
+void BufferOfVectors::Add_data(vector<double> new_line) {
+    assertm(new_line.size() == number_of_columns_,
     "wrong number of columns");
-    this->data.push_back(new_line);
-    accumulated_size = this->data.size();
+    data_.push_back(new_line);
+    accumulated_size_ = data_.size();
 }
-vector<vector<double>> buffer_of_vectors::get_data() {
+vector<vector<double>> BufferOfVectors::Get_data() {
     vector<vector<double>>  result;
-    for (int i = 0; i < this->window_size; i++) {
-        result.push_back(this->data[0]);
-        this->data.erase(this->data.begin());
+    for (int i = 0; i < window_size_; i++) {
+        result.push_back(data_[0]);
+        data_.erase(data_.begin());
     }
-    accumulated_size = this->data.size();
+    accumulated_size_ = data_.size();
     return result;
 }
-void buffer_of_vectors::resest() {
-    for (int i = 0; i < this->accumulated_size; i++) {
-        this->data.pop_back();
+void BufferOfVectors::Reset() {
+    for (int i = 0; i < accumulated_size_; i++) {
+        data_.pop_back();
     }
-    accumulated_size = this->data.size();
+    accumulated_size_ = data_.size();
 }
 
-buffer_of_matrices::buffer_of_matrices(int window_size, int n_rows,
+BufferOfMatrices::BufferOfMatrices(int window_size, int n_rows,
     int n_cols) {
-    this->window_size = window_size;
-    this->number_of_rows = n_rows;
-    this->number_of_columns = n_cols;
-    this->accumulated_size = 0;
+    window_size_ = window_size;
+    number_of_rows_ = n_rows;
+    number_of_columns_ = n_cols;
+    accumulated_size_ = 0;
 }
-void buffer_of_matrices::add_data(vector<vector<double>> new_mat) {
-    assertm(new_mat.size() == this->number_of_rows, "wrong number of rows");
-    assertm(new_mat[0].size() == this->number_of_columns,
+void BufferOfMatrices::Add_data(vector<vector<double>> new_mat) {
+    assertm(new_mat.size() == number_of_rows_, "wrong number of rows");
+    assertm(new_mat[0].size() == number_of_columns_,
         "wrong number of columns");
-    this->data.push_back(new_mat);
-    accumulated_size = this->data.size();
+    data_.push_back(new_mat);
+    accumulated_size_ = data_.size();
 }
-vector<vector<vector<double>>> buffer_of_matrices::get_data() {
+vector<vector<vector<double>>> BufferOfMatrices::Get_data() {
     vector<vector<vector<double>>>  result;
-    for (int i = 0; i < this->window_size; i++) {
-        result.push_back(this->data[0]);
-        this->data.erase(this->data.begin());
+    for (int i = 0; i < window_size_; i++) {
+        result.push_back(data_[0]);
+        data_.erase(data_.begin());
     }
-    accumulated_size = this->data.size();
+    accumulated_size_ = data_.size();
     return result;
 }
-void buffer_of_matrices::resest() {
-    for (int i = 0; i < this->accumulated_size; i++) {
-        this->data.pop_back();
+void BufferOfMatrices::Reset() {
+    for (int i = 0; i < accumulated_size_; i++) {
+        data_.pop_back();
     }
-    accumulated_size = this->data.size();
+    accumulated_size_ = data_.size();
 }
 
-void buffer_test() {
+void Buffer_test() {
     vector<vector<double>> IMU = { {0, 0, 0}, {1, 1, 1}, {2, 2, 2},
         {3, 3, 3}, {4, 4, 4}, {5, 5, 5}, {6, 6, 6}, {7, 7, 7},
         {8, 8, 8}, {9, 9, 9} };
     int ws = 4;
     int n_cols = 3;
-    buffer_of_vectors buffer_obj(ws, n_cols);
+    BufferOfVectors buffer_obj(ws, n_cols);
     for (int i = 0; i < IMU.size(); i++) {
-        buffer_obj.add_data(IMU[i]);
-        std::cout << "accumulated size is " << buffer_obj.accumulated_size <<
+        buffer_obj.Add_data(IMU[i]);
+        std::cout << "accumulated size is " << buffer_obj.accumulated_size_ <<
             endl;
-        std::cout << "last element = " << buffer_obj.data.back()[0] << endl;
-        if (buffer_obj.accumulated_size >= buffer_obj.window_size) {
-            vector<vector<double>> output(buffer_obj.window_size,
-            vector<double>(buffer_obj.number_of_columns));
-            output = buffer_obj.get_data();
+        std::cout << "last element = " << buffer_obj.data_.back()[0] << endl;
+        if (buffer_obj.accumulated_size_ >= buffer_obj.window_size_) {
+            vector<vector<double>> output(buffer_obj.window_size_,
+            vector<double>(buffer_obj.number_of_columns_));
+            output = buffer_obj.Get_data();
             for (int i = 0; i < output.size(); i++) {
                 std::cout << output[i][0] << endl;
             }
             std::cout << "accumulated size is " <<
-            buffer_obj.accumulated_size << endl;
+            buffer_obj.accumulated_size_ << endl;
         }
     }
-    std::cout << "accumulated size is " << buffer_obj.accumulated_size << endl;
-    for (int i = 0; i < buffer_obj.data.size(); i++) {
-        std::cout << buffer_obj.data[i][0] << endl;
+    std::cout << "accumulated size is " << buffer_obj.accumulated_size_ << endl;
+    for (int i = 0; i < buffer_obj.data_.size(); i++) {
+        std::cout << buffer_obj.data_[i][0] << endl;
     }
-    buffer_obj.resest();
+    buffer_obj.Reset();
     std::cout << "accumulated size after reset is " <<
-        buffer_obj.accumulated_size << endl;
-    for (int i = 0; i < buffer_obj.data.size(); i++) {
-        std::cout << buffer_obj.data[i][0] << endl;
+        buffer_obj.accumulated_size_ << endl;
+    for (int i = 0; i < buffer_obj.data_.size(); i++) {
+        std::cout << buffer_obj.data_[i][0] << endl;
     }
 }
-vector<double> diff(vector<double> u) {
+vector<double> Diff(vector<double> u) {
     vector<double> diff(u.size());
     std::adjacent_difference(u.begin(), u.end(), diff.begin());
     diff.erase(diff.begin());
     return diff;
 }
 
-double mean(vector<double> u) {
+double Mean(vector<double> u) {
     double sum = accumulate(u.begin(), u.end(), 0.0);
     double m = sum / u.size();
     return m;
 }
 
-vector<double> rot_mat2euler(vector<vector<double>> R) {
+vector<double> Rot_mat2euler(vector<vector<double>> R) {
     vector<double> euler(3);
 
     double phi = atan2(R[2][1], R[2][2]);
@@ -513,7 +513,7 @@ vector<double> rot_mat2euler(vector<vector<double>> R) {
     return euler;
 }
 
-vector<double> rot_mat2euler(Matrix3d R) {
+vector<double> Rot_mat2euler(Matrix3d R) {
     vector<double> euler(3);
 
     double phi = atan2(R(2, 1), R(2, 2));
@@ -563,27 +563,27 @@ Matrix3d TRIAD(Vector3d fb, Vector3d mb, Vector3d fn, Vector3d mn) {
     return Cbn;
 }
 
-Matrix3d construct_rot_mat_from_columns(Vector3d col1, Vector3d col2,
+Matrix3d Construct_rot_mat_from_columns(Vector3d col1, Vector3d col2,
 Vector3d col3) {
     Matrix3d mat_joined;
     mat_joined << col1, col2, col3;
     return mat_joined;
 }
 
-vector<double> add_scalar_to_vector(vector<double> vec, double scalar) {
+vector<double> Add_scalar_to_vector(vector<double> vec, double scalar) {
     for (double& element : vec)
         element += scalar;
     return vec;
 }
 
-VectorXd convert_vector_to_eigen(const vector<double>& vec) {
+VectorXd Convert_vector_to_eigen(const vector<double>& vec) {
     VectorXd vec_eigen(vec.size());
     for (int i = 0; i < vec.size(); i++)
         vec_eigen[i] = vec[i];
     return vec_eigen;
 }
 
-MatrixXd convert_matrix_to_eigen(const vector<vector<double>>& mat) {
+MatrixXd Convert_matrix_to_eigen(const vector<vector<double>>& mat) {
     int n_rows = mat.size();
     int n_cols = mat[0].size();
 
@@ -605,7 +605,7 @@ Matrix3d OrthonormalizeRotationMatrix(Matrix3d R) {
     return Rn;
 }
 
-vector<double> subtract_vectors(const vector<double> &vec1,
+vector<double> Subtract_vectors(const vector<double> &vec1,
 const vector<double> &vec2) {
     vector<double> res;
     transform(vec1.begin(), vec1.end(), vec2.begin(), back_inserter(res),
@@ -613,16 +613,16 @@ const vector<double> &vec2) {
     return res;
 }
 
-vector<vector<double>> subtract_matrices(const vector<vector<double>> &mat1,
+vector<vector<double>> Subtract_matrices(const vector<vector<double>> &mat1,
 const vector<vector<double>> &mat2) {
     vector<vector<double>> res;
     transform(mat1.begin(), mat1.end(), mat2.begin(), back_inserter(res),
-    [](vector<double> a, vector<double> b) { return subtract_vectors(a, b); });
+    [](vector<double> a, vector<double> b) { return Subtract_vectors(a, b); });
     return res;
 }
 
-vector<double> rot_mat2quaternion(const vector<vector<double>>& R) {
-    MatrixXd r_eigen = convert_matrix_to_eigen(R);
+vector<double> Rot_mat2quaternion(const vector<vector<double>>& R) {
+    MatrixXd r_eigen = Convert_matrix_to_eigen(R);
     // compiler wanna make sure we're passing 3x3 matrix
     Quaterniond q_eigen(r_eigen.block<3, 3>(0, 0));
     // scipy returns x,y,z,w
@@ -631,32 +631,32 @@ vector<double> rot_mat2quaternion(const vector<vector<double>>& R) {
     return q;
 }
 
-vector<vector<double>> rot_mat2quaternion(
+vector<vector<double>> Rot_mat2quaternion(
     const vector<vector<vector<double>>>& R) {
     vector<vector<double>> res;
     for (vector<vector<double>> mat : R)
-        res.push_back(rot_mat2quaternion(mat));
+        res.push_back(Rot_mat2quaternion(mat));
     return res;
 }
 
-vector<double> rot_mat2r6d(const vector<vector<double>>& R) {
+vector<double> Rot_mat2r6d(const vector<vector<double>>& R) {
     vector<double> r6 = { R[0][0], R[1][0], R[2][0], R[0][1], R[1][1],
         R[2][1], };
     return r6;
 }
 
-vector<vector<double>> rot_mat2r6d(const vector<vector<vector<double>>>& R) {
+vector<vector<double>> Rot_mat2r6d(const vector<vector<vector<double>>>& R) {
     vector<vector<double>> res;
     for (vector<vector<double>> mat : R)
-        res.push_back(rot_mat2r6d(mat));
+        res.push_back(Rot_mat2r6d(mat));
     return res;
 }
 
-bool number_in_range(double num, const vector<double>& limits) {
+bool Number_in_range(double num, const vector<double>& limits) {
     return (num > limits[0]) && (num < limits[1]);
 }
 
-vector<bool> numbers_in_range(const vector<vector<double>>& nums,
+vector<bool> Numbers_in_range(const vector<vector<double>>& nums,
 const vector<vector<double>>& limits) {
     int n = nums.size();
     vector<bool> res(n);
@@ -668,14 +668,14 @@ const vector<vector<double>>& limits) {
     for (int i = 0; i < n; i++) {
         bool r = true;
         for (int j = 0; j < m; j++) {
-            r &= number_in_range(nums[i][j], limits[j]);
+            r &= Number_in_range(nums[i][j], limits[j]);
         }
         res[i] = r;
     }
     return res;
 }
 
-vector<double> linspace(double start, double end, size_t size) {
+vector<double> Linspace(double start, double end, size_t size) {
     vector<double> vec(size);
     vec[0] = start;     // exactly start
     vec[size - 1] = end;    // exactly end
@@ -689,7 +689,7 @@ vector<double> linspace(double start, double end, size_t size) {
     return vec;
 }
 
-double weighted_average(const vector<double>& nums,
+double Weighted_average(const vector<double>& nums,
 const vector<double>& weights) {
     int n = nums.size();
     double total = 0;
@@ -701,7 +701,7 @@ const vector<double>& weights) {
     return total / total_weights;
 }
 
-vector<double> weighted_xy(const vector<vector<double>>& xy,
+vector<double> Weighted_xy(const vector<vector<double>>& xy,
 const vector<double>& weights) {
     int n = xy.size();
     double x = 0;
@@ -716,7 +716,7 @@ const vector<double>& weights) {
     return res;
 }
 
-void write_csv(std::string filename, std::vector<std::pair<std::string,
+void Write_csv(std::string filename, std::vector<std::pair<std::string,
 std::vector<double>>> dataset) {
     // Make a CSV file with one or more columns of integer values
     // Each column of data is represented by the
@@ -750,7 +750,7 @@ std::vector<double>>> dataset) {
     myFile.close();
 }
 
-pair<vector<double>, vector<double>> split_array_of_2d_coor(
+pair<vector<double>, vector<double>> Split_array_of_2d_coor(
 vector<vector<double>> array_of_2d_coor) {
     vector<double> X;
     vector<double> Y;
@@ -762,32 +762,32 @@ vector<vector<double>> array_of_2d_coor) {
     return result;
 }
 
-int argmin(vector<double> vec) {
+int Argmin(vector<double> vec) {
     int idx = std::min_element(vec.begin(), vec.end()) - vec.begin();
     return idx;
 }
 
-double square(double x) {
+double Square(double x) {
     return x * x;
 }
 
-double vector_2_norm(const vector<double>& vec) {
+double Vector_2_norm(const vector<double>& vec) {
     // like np.linalg.norm(vec)
     assertm(vec.size() == 2, "invalid dimentions");
     return sqrt(pow(vec[0], 2) + pow(vec[1], 2));
 }
 
-vector<double> norm_nX2_array(const vector<vector<double>>& nX2_array) {
+vector<double> Norm_nX2_array(const vector<vector<double>>& nX2_array) {
     // like np.linalg.norm(nX2_array, axis=1)
     assertm(nX2_array[0].size() == 2, "invalid dimentions");
     vector<double> arr_norm;
     for (int i = 0; i < nX2_array.size(); i++) {
-        arr_norm.push_back(vector_2_norm(nX2_array[i]));
+        arr_norm.push_back(Vector_2_norm(nX2_array[i]));
     }
     return arr_norm;
 }
 
-vector<double> quaternion2euler(const vector<double>& q) {
+vector<double> Quaternion2euler(const vector<double>& q) {
     assertm(q.size() == 4, "quaternion must have 4 elements");
     double w = q[0];
     double x = q[1];
