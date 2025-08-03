@@ -4,168 +4,567 @@ Proprietary and confidential.
 Created on Thu Feb 19 2024 by Eran Vertzberger
 */
 
-// define classes in this file only once
-// see: https://stackoverflow.com/a/37686388/2999345
 #pragma once
-// #include "includes.hpp"
-#include <vector>
-// using namespace std;
+
 #include <filesystem>
 #include <string>
 #include <utility>
+#include <vector>
+
 #include <Eigen/Dense>
-// using namespace Eigen;
-// Replaced directive with declarations:
-using Eigen::Matrix3d;
-using Eigen::Matrix2d;
+
+// Forward declarations for Eigen types used in this file
+namespace Eigen {
+// Existing declarations used in this file
+}
+
 using Eigen::Matrix;
+using Eigen::Matrix2d;
+using Eigen::Matrix3d;
 using Eigen::MatrixXd;
+using Eigen::RowVector3d;
+using Eigen::Vector;
 using Eigen::Vector2d;
 using Eigen::Vector3d;
-using Eigen::Vector;
 using Eigen::VectorXd;
-using Eigen::RowVector3d;
-using std::vector;
 using std::pair;
 using std::string;
+using std::vector;
+
 /* AHRS classes */
 
+/**
+ * @brief Class for handling IMU recording segments for attitude estimation.
+ * 
+ * This class processes and stores IMU data from various file formats
+ * to be used for attitude estimation and analysis.
+ */
 class SegmentIMURecording {
  private:
     enum FileFormat { trc, ridi, trc2, aidriver};
 
  public:
-    // attributes
-    vector<double> time_IMU;
-    vector<double> time_ori;
-    vector<double> phi;
-    vector<double> theta;
-    vector<double> psi;
-    vector<vector<double>> gyro;
-    vector<vector<double>> acc;
-    double dt = -1;
-    int number_of_IMU_samples;
+    // Sensor data attributes
+    vector<double> time_IMU_;
+    vector<double> time_ori_;
+    vector<double> phi_;
+    vector<double> theta_;
+    vector<double> psi_;
+    vector<vector<double>> gyro_;
+    vector<vector<double>> acc_;
+    double dt_ = -1;
+    int number_of_IMU_samples_;
 
+    /**
+     * @brief Default constructor
+     */
     SegmentIMURecording() = default;
+    
+    /**
+     * @brief Construct a new Segment IMU Recording with specified time step
+     * 
+     * @param time Timestamp vector for IMU samples
+     * @param gyro Gyroscope data (angular velocities)
+     * @param acc Accelerometer data
+     * @param dt Time step between samples
+     */
     SegmentIMURecording(
         const vector<double>& time,
         const vector<vector<double>>& gyro,
         const vector<vector<double>>& acc,
         double dt)
-        : time_IMU(time), gyro(gyro), acc(acc), dt(dt) {
+        : time_IMU_(time), gyro_(gyro), acc_(acc), dt_(dt) {
     }
+    
+    /**
+     * @brief Construct a new Segment IMU Recording (dt will be computed)
+     * 
+     * @param time Timestamp vector for IMU samples
+     * @param gyro Gyroscope data (angular velocities)
+     * @param acc Accelerometer data
+     */
     SegmentIMURecording(
         const vector<double>& time,
         const vector<vector<double>>& gyro,
         const vector<vector<double>>& acc)
-        : time_IMU(time), gyro(gyro), acc(acc) {
+        : time_IMU_(time), gyro_(gyro), acc_(acc) {
     }
+    
+    /**
+     * @brief Construct a new Segment IMU Recording from a file
+     * 
+     * @param file_path Path to the IMU data file
+     */
     SegmentIMURecording(
         std::filesystem::path file_path);   // construct from file
-    void compute_dt();
+    
+    /**
+     * @brief Compute the time step between IMU samples
+     */
+    void Compute_dt();
 };
 
+/**
+ * @brief Class for estimating attitude based on IMU data.
+ * 
+ * This class implements algorithms to fuse gyroscope and accelerometer data
+ * for robust attitude and heading estimation.
+ */
 class AttitudeEstimator {
  public:
-    // attributes
-    double dt, phi, theta, psi, Kgx, Kgy, Kgz, g, update_time;
-    /*vector<vector<double>> Rnb;
-    vector<double> gn, gb, mn, mb;*/
-    Matrix3d Rnb;
-    Vector3d gn, gb, mn, mb;
+    // Attitude estimation parameters and state
+    double dt_;
+    double phi_;
+    double theta_;
+    double psi_;
+    double Kgx_;
+    double Kgy_;
+    double Kgz_;
+    double g_;
+    double update_time_;
+    
+    // Rotation and reference vectors
+    Matrix3d Rnb_;
+    Vector3d gn_;
+    Vector3d gb_;
+    Vector3d mn_;
+    Vector3d mb_;
     std::string coor_sys_convention_;
     bool clock_initialized_ = false;
     bool rotation_initialized_ = false;
-    // methods
-    /*AttitudeEstimator(double dt, vector<vector<double>> Rnb, double Ka);*/
+    
+    /**
+     * @brief Constructs an AttitudeEstimator with specified parameters.
+     * 
+     * @param dt Time step between updates in seconds
+     * @param Ka Gain parameter for the accelerometer correction
+     * @param coor_sys_convention Coordinate system convention ("NED" or "ENU")
+     */
     AttitudeEstimator(double dt, double Ka,
-                                     std::string coor_sys_convention = "NED");
+                      std::string coor_sys_convention = "NED");
+    
+    /**
+     * @brief Processes gyroscope measurements to update the rotation matrix.
+     * 
+     * @param gyro Vector of 3 angular velocities (x, y, z) in rad/s
+     * @param clock Current timestamp in seconds
+     */
     void GyroPromotion(vector<double> gyro, double clock);
+    
+    /**
+     * @brief Updates the gravity vector estimation using accelerometer data.
+     * 
+     * @param acc Vector of 3 accelerations (x, y, z) in m/s^2
+     */
     void UpdateGravity(vector<double> acc);
+    
+    /**
+     * @brief Initializes the rotation matrix with given Euler angles.
+     * 
+     * @param phi0 Initial roll angle in radians
+     * @param theta0 Initial pitch angle in radians
+     * @param psi0 Initial yaw angle in radians
+     */
     void InitializeRotation(double phi0, double theta0, double psi0);
-    void run_exp(
+    
+    /**
+     * @brief Runs an experiment using recorded IMU data.
+     * 
+     * @param exp The IMU recording segment containing data to process
+     * @param file_name Path to the output CSV file
+     * @param initial_heading Initial heading in radians
+     */
+    void Run_exp(
         SegmentIMURecording exp,
         string file_name, double initial_heading);
 };
 
-class buffer_of_scalars {
+/**
+ * @brief Buffer class for scalar values.
+ * 
+ * Manages a sliding window of scalar values with FIFO (First-In-First-Out) behavior.
+ */
+class BufferOfScalars {
  public:
-    // att
-    vector<double> data;
-    int window_size;
-    int accumulated_size;
-    // methods
-    explicit buffer_of_scalars(int window_size);
-    void add_data(double new_value);
-    vector<double> get_data();
-    void resest();
+    // Buffer data and parameters
+    vector<double> data_;
+    int window_size_;
+    int accumulated_size_;
+    
+    /**
+     * @brief Construct a new Buffer Of Scalars object
+     * 
+     * @param window_size Size of the sliding window
+     */
+    explicit BufferOfScalars(int window_size);
+    
+    /**
+     * @brief Add a new value to the buffer
+     * 
+     * @param new_value Value to add to the buffer
+     */
+    void Add_data(double new_value);
+    
+    /**
+     * @brief Get and remove the oldest data from the buffer
+     * 
+     * @return vector<double> Removed data elements
+     */
+    vector<double> Get_data();
+    
+    /**
+     * @brief Reset the buffer (clear all data)
+     */
+    void Reset();
 };
-class buffer_of_vectors {
+
+/**
+ * @brief Buffer class for vector values.
+ * 
+ * Manages a sliding window of vector values with FIFO behavior.
+ */
+class BufferOfVectors {
  public:
-    // att
-    vector<vector<double>> data;
-    int window_size;
-    int accumulated_size;
-    int number_of_columns;
-    // methods
-    buffer_of_vectors(int window_size, int n_clos);
-    void add_data(vector<double> new_line);
-    vector<vector<double>> get_data();
-    void resest();
+    // Buffer data and parameters
+    vector<vector<double>> data_;
+    int window_size_;
+    int accumulated_size_;
+    int number_of_columns_;
+    
+    /**
+     * @brief Construct a new Buffer Of Vectors object
+     * 
+     * @param window_size Size of the sliding window
+     * @param n_cols Number of columns in each vector
+     */
+    BufferOfVectors(int window_size, int n_cols);
+    
+    /**
+     * @brief Add a new vector to the buffer
+     * 
+     * @param new_line Vector to add to the buffer
+     */
+    void Add_data(vector<double> new_line);
+    
+    /**
+     * @brief Get and remove the oldest data from the buffer
+     * 
+     * @return vector<vector<double>> Removed data elements
+     */
+    vector<vector<double>> Get_data();
+    
+    /**
+     * @brief Reset the buffer (clear all data)
+     */
+    void Reset();
 };
-class buffer_of_matrices {
+
+/**
+ * @brief Buffer class for matrix values.
+ * 
+ * Manages a sliding window of matrix values with FIFO behavior.
+ */
+class BufferOfMatrices {
  public:
-    // att
-    vector<vector<vector<double>>> data;
-    int window_size;
-    int accumulated_size;
-    int number_of_rows;
-    int number_of_columns;
-    // methods
-    buffer_of_matrices(int window_size, int n_rows, int n_clos);
-    void add_data(vector<vector<double>> new_mat);
-    vector<vector<vector<double>>> get_data();
-    void resest();
+    // Buffer data and parameters
+    vector<vector<vector<double>>> data_;
+    int window_size_;
+    int accumulated_size_;
+    int number_of_rows_;
+    int number_of_columns_;
+    
+    /**
+     * @brief Construct a new Buffer Of Matrices object
+     * 
+     * @param window_size Size of the sliding window
+     * @param n_rows Number of rows in each matrix
+     * @param n_cols Number of columns in each matrix
+     */
+    BufferOfMatrices(int window_size, int n_rows, int n_cols);
+    
+    /**
+     * @brief Add a new matrix to the buffer
+     * 
+     * @param new_mat Matrix to add to the buffer
+     */
+    void Add_data(vector<vector<double>> new_mat);
+    
+    /**
+     * @brief Get and remove the oldest data from the buffer
+     * 
+     * @return vector<vector<vector<double>>> Removed data elements
+     */
+    vector<vector<vector<double>>> Get_data();
+    
+    /**
+     * @brief Reset the buffer (clear all data)
+     */
+    void Reset();
 };
-void buffer_test();
-int ahrs_test();
-vector<double> diff(vector<double> u);
-double mean(vector<double> u);
-vector<double> rot_mat2euler(vector<vector<double>> Rnb);
-vector<double> rot_mat2euler(Matrix3d R);
-Matrix3d Vec2SkewSimetric(vector<double>  Vec);
-vector<double> add_scalar_to_vector(vector<double> vec, double scalar);
-VectorXd convert_vector_to_eigen(const vector<double>& vec);
-MatrixXd convert_matrix_to_eigen(const vector<vector<double>>& mat);
+
+/**
+ * @brief Test function for the buffer classes
+ */
+void Buffer_test();
+
+/**
+ * @brief Test function for the AHRS functionality
+ * 
+ * @return int Status code (0 for success)
+ */
+int Ahrs_test();
+
+/**
+ * @brief Calculate the differences between consecutive elements in a vector
+ * 
+ * @param u Input vector
+ * @return vector<double> Vector of differences
+ */
+vector<double> Diff(vector<double> u);
+
+/**
+ * @brief Calculate the mean value of a vector
+ * 
+ * @param u Input vector
+ * @return double Mean value
+ */
+double Mean(vector<double> u);
+
+/**
+ * @brief Convert a rotation matrix to Euler angles (phi, theta, psi)
+ * 
+ * @param Rnb Rotation matrix from body to navigation frame
+ * @return vector<double> Euler angles [phi, theta, psi] in radians
+ */
+vector<double> Rot_mat2euler(vector<vector<double>> Rnb);
+
+/**
+ * @brief Convert an Eigen rotation matrix to Euler angles (phi, theta, psi)
+ * 
+ * @param R Eigen rotation matrix from body to navigation frame
+ * @return vector<double> Euler angles [phi, theta, psi] in radians
+ */
+vector<double> Rot_mat2euler(Matrix3d R);
+
+/**
+ * @brief Create a skew-symmetric matrix from a 3D vector
+ * 
+ * @param Vec Input 3D vector
+ * @return Matrix3d Skew-symmetric matrix
+ */
+Matrix3d Vec2SkewSimetric(vector<double> Vec);
+
+/**
+ * @brief Add a scalar value to all elements of a vector
+ * 
+ * @param vec Input vector
+ * @param scalar Scalar value to add
+ * @return vector<double> Result vector
+ */
+vector<double> Add_scalar_to_vector(vector<double> vec, double scalar);
+
+/**
+ * @brief Convert a standard vector to Eigen vector
+ * 
+ * @param vec Input standard vector
+ * @return VectorXd Eigen vector
+ */
+VectorXd Convert_vector_to_eigen(const vector<double>& vec);
+
+/**
+ * @brief Convert a standard matrix to Eigen matrix
+ * 
+ * @param mat Input standard matrix
+ * @return MatrixXd Eigen matrix
+ */
+MatrixXd Convert_matrix_to_eigen(const vector<vector<double>>& mat);
+
+/**
+ * @brief Orthonormalize a rotation matrix
+ * 
+ * @param R Input rotation matrix
+ * @return Matrix3d Orthonormalized rotation matrix
+ */
 Matrix3d OrthonormalizeRotationMatrix(Matrix3d R);
-Matrix3d Vec2SkewSimetric(vector<double>  Vec);
+
+/**
+ * @brief Apply the TRIAD algorithm to determine attitude
+ * 
+ * @param fb First vector in body frame
+ * @param mb Second vector in body frame
+ * @param fn First vector in navigation frame
+ * @param mn Second vector in navigation frame
+ * @return Matrix3d Rotation matrix from body to navigation frame
+ */
 Matrix3d TRIAD(Vector3d fb, Vector3d mb, Vector3d fn, Vector3d mn);
-Matrix3d construct_rot_mat_from_columns(Vector3d col1, Vector3d col2,
+
+/**
+ * @brief Construct a rotation matrix from three column vectors
+ * 
+ * @param col1 First column
+ * @param col2 Second column
+ * @param col3 Third column
+ * @return Matrix3d Constructed rotation matrix
+ */
+Matrix3d Construct_rot_mat_from_columns(Vector3d col1, Vector3d col2,
 Vector3d col3);
-vector<double> add_scalar_to_vector(vector<double> vec, double scalar);
-vector<double> subtract_vectors(const vector<double> &vec1,
+
+/**
+ * @brief Subtract two vectors element-wise
+ * 
+ * @param vec1 First vector
+ * @param vec2 Second vector
+ * @return vector<double> Result vector
+ */
+vector<double> Subtract_vectors(const vector<double> &vec1,
 const vector<double> &vec2);
-vector<vector<double>> subtract_matrices(const vector<vector<double>> &mat1,
+
+/**
+ * @brief Subtract two matrices element-wise
+ * 
+ * @param mat1 First matrix
+ * @param mat2 Second matrix
+ * @return vector<vector<double>> Result matrix
+ */
+vector<vector<double>> Subtract_matrices(const vector<vector<double>> &mat1,
 const vector<vector<double>> &mat2);
-vector<double> rot_mat2quaternion(const vector<vector<double>>& R);
-vector<vector<double>> rot_mat2quaternion(
+
+/**
+ * @brief Convert a rotation matrix to quaternion representation
+ * 
+ * @param R Rotation matrix
+ * @return vector<double> Quaternion [x, y, z, w]
+ */
+vector<double> Rot_mat2quaternion(const vector<vector<double>>& R);
+
+/**
+ * @brief Convert multiple rotation matrices to quaternions
+ * 
+ * @param R Array of rotation matrices
+ * @return vector<vector<double>> Array of quaternions
+ */
+vector<vector<double>> Rot_mat2quaternion(
     const vector<vector<vector<double>>>& R);
-vector<double> rot_mat2r6d(const vector<vector<double>>& R);
-vector<vector<double>> rot_mat2r6d(const vector<vector<vector<double>>>& R);
-bool number_in_range(double num, const vector<double>& limits);
-vector<bool> numbers_in_range(const vector<vector<double>>& nums,
+
+/**
+ * @brief Convert a rotation matrix to 6D representation
+ * 
+ * @param R Rotation matrix
+ * @return vector<double> 6D representation
+ */
+vector<double> Rot_mat2r6d(const vector<vector<double>>& R);
+
+/**
+ * @brief Convert multiple rotation matrices to 6D representations
+ * 
+ * @param R Array of rotation matrices
+ * @return vector<vector<double>> Array of 6D representations
+ */
+vector<vector<double>> Rot_mat2r6d(const vector<vector<vector<double>>>& R);
+
+/**
+ * @brief Check if a number is within a specified range
+ * 
+ * @param num Number to check
+ * @param limits Range limits [min, max]
+ * @return bool True if number is within range
+ */
+bool Number_in_range(double num, const vector<double>& limits);
+
+/**
+ * @brief Check if vectors of numbers are within specified ranges
+ * 
+ * @param nums Array of numbers to check
+ * @param limits Array of range limits
+ * @return vector<bool> Results for each vector
+ */
+vector<bool> Numbers_in_range(const vector<vector<double>>& nums,
 const vector<vector<double>>& limits);
-vector<double> linspace(double start, double end, size_t size);
-double weighted_average(const vector<double>& nums,
+
+/**
+ * @brief Generate a linearly spaced vector between start and end values
+ * 
+ * @param start Start value
+ * @param end End value
+ * @param size Number of elements
+ * @return vector<double> Linearly spaced vector
+ */
+vector<double> Linspace(double start, double end, size_t size);
+
+/**
+ * @brief Calculate weighted average of numbers
+ * 
+ * @param nums Vector of numbers
+ * @param weights Vector of weights
+ * @return double Weighted average
+ */
+double Weighted_average(const vector<double>& nums,
 const vector<double>& weights);
-vector<double> weighted_xy(const vector<vector<double>>& xy,
+
+/**
+ * @brief Calculate weighted average of 2D coordinates
+ * 
+ * @param xy Vector of 2D coordinates
+ * @param weights Vector of weights
+ * @return vector<double> Weighted average coordinate
+ */
+vector<double> Weighted_xy(const vector<vector<double>>& xy,
 const vector<double>& weights);
-void write_csv(std::string filename, std::vector<std::pair<std::string,
+
+/**
+ * @brief Write dataset to a CSV file
+ * 
+ * @param filename Output filename
+ * @param dataset Dataset as pairs of column name and data
+ */
+void Write_csv(std::string filename, std::vector<std::pair<std::string,
 std::vector<double>>> dataset);
-pair<vector<double>, vector<double>> split_array_of_2d_coor(
+
+/**
+ * @brief Split an array of 2D coordinates into separate X and Y arrays
+ * 
+ * @param array_of_2d_coor Array of 2D coordinates
+ * @return pair<vector<double>, vector<double>> Pair of X and Y arrays
+ */
+pair<vector<double>, vector<double>> Split_array_of_2d_coor(
     vector<vector<double>> array_of_2d_coor);
-int argmin(vector<double> vec);
-double square(double x);
-double vector_2_norm(const vector<double>& vec);
-vector<double> norm_nX2_array(const vector<vector<double>>& nX2_array);
-vector<double> quaternion2euler(const vector<double>& q);
+
+/**
+ * @brief Find the index of the minimum value in a vector
+ * 
+ * @param vec Input vector
+ * @return int Index of minimum value
+ */
+int Argmin(vector<double> vec);
+
+/**
+ * @brief Calculate the square of a number
+ * 
+ * @param x Input number
+ * @return double Square of the number
+ */
+double Square(double x);
+
+/**
+ * @brief Calculate the Euclidean norm (2-norm) of a 2D vector
+ * 
+ * @param vec 2D vector
+ * @return double Euclidean norm
+ */
+double Vector_2_norm(const vector<double>& vec);
+
+/**
+ * @brief Calculate the norms of multiple 2D vectors
+ * 
+ * @param nX2_array Array of 2D vectors
+ * @return vector<double> Vector of norms
+ */
+vector<double> Norm_nX2_array(const vector<vector<double>>& nX2_array);
+
+/**
+ * @brief Convert quaternion to Euler angles
+ * 
+ * @param q Quaternion [w, x, y, z]
+ * @return vector<double> Euler angles [roll, pitch, yaw]
+ */
+vector<double> Quaternion2euler(const vector<double>& q);
