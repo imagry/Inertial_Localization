@@ -5,6 +5,7 @@
 #include <memory>
 
 #include "../Utils/AHRS.hpp"
+#include "../Utils/Sensors.hpp"
 #include "../Utils/units.hpp"
 
 // Test fixture for AttitudeEstimator tests

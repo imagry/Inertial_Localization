@@ -13,6 +13,7 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "../../../ahrs_loc_handler.hpp"
 #include "../../../Utils/units.hpp"
 #include "../../../Utils/Classes.hpp"
+#include "../../../Utils/Sensors.hpp"
 #include "../../../Utils/short_term_localization.hpp"
 
 PYBIND11_MODULE(localization_pybind_module, m) {

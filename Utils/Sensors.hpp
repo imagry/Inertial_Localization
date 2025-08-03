@@ -8,21 +8,24 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "Classes.hpp"
 #include "units.hpp"
 
-struct IMU {
-    PreciseSeconds imu_time_;
+struct Vec3d {
+    double x;
+    double y;
+    double z;
+};
+
+struct ImuSample {
+    double time_stamp;
     Vec3d acc_;
-    Vec3d b_acc_;
+    Vec3d acc_b_;
     Vec3d gyro_;
-    Vec3d b_gyro_;
+    Vec3d gyro_b_;
     Vec3d mag_;
     PreciseRadians pitch_;
     PreciseRadians roll_;
     PreciseRadians yaw_;
-    
-    // Default constructor
-    IMU() : imu_time_(0.0), acc_(), b_acc_(), gyro_(), b_gyro_(), mag_(), 
-            pitch_(0.0), roll_(0.0), yaw_(0.0) {}
 };
+
 struct CarSensors {
     PreciseMps speed_;
     PreciseRadians steering_;

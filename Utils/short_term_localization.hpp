@@ -11,23 +11,7 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include <vector>
 
 #include "units.hpp"
-
-struct Vec3d {
-    double x;
-    double y;
-    double z;
-};
-struct ImuSample {
-    double time_stamp;
-    Vec3d acc_;
-    Vec3d acc_b_;
-    Vec3d gyro_;
-    Vec3d gyro_b_;
-    Vec3d mag_;
-    PreciseRadians pitch_;
-    PreciseRadians roll_;
-    PreciseRadians yaw_;
-};
+#include "Sensors.hpp"
 
 struct WheelOdometrySample {
     // Time stamp of last wheel speed update (either left or right)

@@ -6,6 +6,7 @@
 #include <string>
 
 #include "../Utils/short_term_localization.hpp"
+#include "../Utils/Sensors.hpp"
 #include "../Utils/units.hpp"
 
 // Test fixture for ShortTermLocalization tests

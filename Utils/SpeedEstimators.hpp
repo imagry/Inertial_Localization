@@ -11,6 +11,7 @@ Created on Thu Nov 28 2024 by Dor Siman Tov
 #include <vector>
 #include <Eigen/Dense>
 #include "short_term_localization.hpp"
+#include "Sensors.hpp"
 #include "units.hpp"
 // TODO(Dor): add ImuSample and WheelOdometrySample references
 

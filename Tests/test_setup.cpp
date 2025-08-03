@@ -18,6 +18,7 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "../Utils/Functions.hpp"// NOLINT
 #include "../Utils/Classes.hpp"// NOLINT
 #include "../Utils/DataHandling.hpp"// NOLINT
+#include "../Utils/Sensors.hpp"// NOLINT
 #include "../Utils/short_term_localization.hpp"// NOLINT
 #include "../wrapper/control_api_wrapper.h"// NOLINT
 
@@ -321,17 +322,4 @@ void TestLPF() {
     f.StepTest();
     f.SinTest();
 }
-void TestLinInterp(){
-    std::vector<double> x = {0, 1, 2, 3};
-    std::vector<double> y = {0, 2, 4, 6};
-    std::vector<double> xi = {0.0, 0.5, 1.5, 20.5};
 
-    auto [yi, success] = LinearInterp(x, y, xi);
-    if (!success) {
-        std::cerr << "[warning] TestLinInterp: Interpolation failed.\n";
-        return;
-    }
-    std::cout << "Interpolated values:\n";
-    for (size_t i = 0; i < xi.size(); ++i)
-            std::cout << "f(" << xi[i] << ") = " << yi[i] << "\n"; 
-}

@@ -8,6 +8,7 @@
 
 #include "../ahrs_loc_handler.hpp"
 #include "../Utils/short_term_localization.hpp"
+#include "../Utils/Sensors.hpp"
 #include "../Utils/units.hpp"
 #include <nlohmann/json.hpp>
 

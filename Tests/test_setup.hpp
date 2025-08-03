@@ -12,5 +12,4 @@ void TestPlotInputs();
 void TestRateLimiter();
 void Test2ndOrderLPF();
 void TestLPF();
-void TestLinInterp();
 

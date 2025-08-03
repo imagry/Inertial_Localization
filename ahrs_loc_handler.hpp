@@ -11,6 +11,7 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include <nlohmann/json.hpp>
 
 #include "Utils/AHRS.hpp"
+#include "Utils/Sensors.hpp"
 #include "Utils/localization_debug_states.hpp"
 /* B10 deprication
 #include "Utils/Delay.hpp"
