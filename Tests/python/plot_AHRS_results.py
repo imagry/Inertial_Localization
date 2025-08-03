@@ -17,5 +17,5 @@ Functions.PlotEulerAngles(Functions.continuous_angle(data_reference.roll * np.pi
                           Functions.continuous_angle(data_estimated.theta_hat),
                           Functions.continuous_angle((data_reference.yaw - data_reference.yaw[0]) * np.pi / 180),
                           Functions.continuous_angle(data_estimated.psi_hat - data_estimated.psi_hat[0]),
-                          t_hat=data_estimated.time_IMU,
-                          t_ref=data_reference.time_stamp - data_reference.time_stamp[0])
+                          np.array(data_estimated.time_IMU),
+                          np.array(data_reference.time_stamp - data_reference.time_stamp[0]))

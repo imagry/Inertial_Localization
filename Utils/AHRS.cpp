@@ -95,7 +95,7 @@ SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
             acc_x_ind = 5;
             acc_y_ind = 6;
             acc_z_ind = 7;
-        } else if (column_counter == 23) {    // aidriver format
+        } else if (column_counter == 26) {    // aidriver format
             std::cout << "ai driver format file!" << endl;
             file_fmt = aidriver;
 
@@ -103,9 +103,9 @@ SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
             time_factor = 1;
             timestamp_thresh = 0;
 
-            gyro_x_ind = 10;
-            gyro_y_ind = 11;
-            gyro_z_ind = 12;
+            gyro_x_ind = 13;
+            gyro_y_ind = 14;
+            gyro_z_ind = 15;
 
             acc_x_ind = 1;
             acc_y_ind = 2;
@@ -327,7 +327,7 @@ int Ahrs_test() {
     // / "../data/backed_data_files";
     std::filesystem::path imu_file_name = "imu.csv";
     std::filesystem::path imu_file_location = current_path /
-        "../data/backed_data_files/2025-05-21T11_52_50";
+        "data/backed_data_files/2025-05-21T11_52_50";
     std::filesystem::path imu_file_path = imu_file_location / imu_file_name;
     cout << "csv file path is : " << imu_file_path << endl;
 
@@ -343,7 +343,7 @@ int Ahrs_test() {
     };
     // Write the vector to CSV
     // Write_csv("data/hao_leg2-psi_phi_theta-cpp.csv", vals);
-    Write_csv(current_path / "../data/temp_results"/"psi_phi_theta-cpp.csv",
+    Write_csv(current_path / "data/temp_results"/"psi_phi_theta-cpp.csv",
         vals);
     Matrix3d Rnb;
     Rnb << 1, 0, 0,
@@ -356,17 +356,24 @@ int Ahrs_test() {
     AE_object.Rnb_ = Rnb;
     // AE_object.Run_exp(imu_data, "CPP_AHRS_results_on_hao_leg2.csv");
     std::filesystem::path output_file_path = current_path /
-        "../data/temp_results"/"CPP_AHRS_results.csv";
+        "data/temp_results"/"CPP_AHRS_results.csv";
     AE_object.Run_exp(imu_data, output_file_path, initial_heading_x);
     // std::string system_cmd = "python ../Tests/python/plot_inputs.py --path "
     //         + output_file_path.string()
     //         + " --x time_IMU time_IMU time_IMU
     // --y phi_hat theta_hat psi_hat";
+    // std::string system_cmd =
+    //     "source Tests/python/vehicle_control_env/bin/activate && "
+    //     "python3 Tests/python/plot_AHRS_results.py --path_estimated "
+    //         + output_file_path.string()
+    //         + " --path_reference "
+    //         + imu_file_path.string();
     std::string system_cmd =
-        "python ../Tests/python/plot_AHRS_results.py --path_estimated "
-            + output_file_path.string()
-            + " --path_reference "
-            + imu_file_path.string();
+    "bash -c 'source Tests/python/vehicle_control_env/bin/activate && "
+    "python3 Tests/python/plot_AHRS_results.py --path_estimated "
+        + output_file_path.string()
+        + " --path_reference "
+        + imu_file_path.string() + "'";
     system(system_cmd.c_str());
     // "time_IMU,phi_hat,phi_e,theta_hat,theta_e,psi_hat,psi_e"
     return 0;

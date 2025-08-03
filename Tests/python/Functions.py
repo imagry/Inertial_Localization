@@ -680,7 +680,7 @@ def FoldAngles(u):
                 y[i] = y[i] + 2 * np.pi
     return y.squeeze()
 @dispatch(np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray)
-def PlotEulerAngles(Phi, PhiHat, Theta, ThetaHat, Psi, PsiHat, t_ref, t_hat=None):
+def PlotEulerAngles(Phi, PhiHat, Theta, ThetaHat, Psi, PsiHat, t_ref, t_hat):
     "insert angles in radians"
     if t_hat is None:
         assert (len(list(Phi)) == len(list(PhiHat)) and
