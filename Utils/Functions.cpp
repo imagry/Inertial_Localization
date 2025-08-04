@@ -300,3 +300,8 @@ double LimitValue(double u, double u_min, double u_max) {
     y = std::min(y, u_max);
     return y;
 }
+
+int Argmin(std::vector<double> vec) {
+    int idx = std::min_element(vec.begin(), vec.end()) - vec.begin();
+    return idx;
+}

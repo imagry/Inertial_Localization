@@ -493,15 +493,6 @@ vector<vector<double>> array_of_2d_coor) {
     return result;
 }
 
-int Argmin(vector<double> vec) {
-    int idx = std::min_element(vec.begin(), vec.end()) - vec.begin();
-    return idx;
-}
-
-double Square(double x) {
-    return x * x;
-}
-
 double Vector_2_norm(const vector<double>& vec) {
     // like np.linalg.norm(vec)
     if (vec.size() != 2) {

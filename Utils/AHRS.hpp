@@ -237,22 +237,6 @@ pair<vector<double>, vector<double>> Split_array_of_2d_coor(
     vector<vector<double>> array_of_2d_coor);
 
 /**
- * @brief Find the index of the minimum value in a vector
- * 
- * @param vec Input vector
- * @return int Index of minimum value
- */
-int Argmin(vector<double> vec);
-
-/**
- * @brief Calculate the square of a number
- * 
- * @param x Input number
- * @return double Square of the number
- */
-double Square(double x);
-
-/**
  * @brief Calculate the Euclidean norm (2-norm) of a 2D vector
  * 
  * @param vec 2D vector

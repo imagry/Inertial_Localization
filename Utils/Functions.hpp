@@ -295,3 +295,11 @@ Eigen::Matrix<double, Dynamic, 2> ProjectPoints2D(
  * @return double Limited value
  */
 double LimitValue(double u, double u_min, double u_max);
+
+/**
+ * @brief Find the index of the minimum value in a vector
+ * 
+ * @param vec Input vector
+ * @return int Index of minimum value
+ */
+int Argmin(std::vector<double> vec);
