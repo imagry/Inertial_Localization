@@ -14,6 +14,7 @@ target_link_libraries(Tests Utils localization_api_wrapper nlohmann_json::nlohma
 set(GTEST_SOURCES
     # Add your test source files here
     test_gtest_sample.cpp
+    test_AHRS.cpp
     # Temporarily comment out these files until we fix the issues
     # test_attitude_estimator.cpp
     # test_short_term_localization.cpp
