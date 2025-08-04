@@ -15,6 +15,7 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include <unsupported/Eigen/MatrixFunctions>
 #define _USE_MATH_DEFINES
 #include "AHRS.hpp"// NOLINT
+#include "Functions.hpp"// NOLINT
 using std::fstream;
 using std::stringstream;
 using std::istringstream;
@@ -193,7 +194,7 @@ SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
     } else {
         std::cout << "Could not open IMU file: " << file_path << endl;
     }
-    this->time_IMU_ = Add_scalar_to_vector(this->time_IMU_, -this->time_IMU_[0]);
+    this->time_IMU_ = AddScalarToVector(this->time_IMU_, -this->time_IMU_[0]);
     number_of_IMU_samples_ = static_cast<int>(time_IMU_.size());
     Compute_dt();
 }
@@ -243,7 +244,7 @@ void AttitudeEstimator::GyroPromotion(vector<double> gyro, double clock) {
 }
 void AttitudeEstimator::UpdateGravity(vector<double> acc) {
     Vector3d gb_m = Rnb_.transpose() * gn_;
-    Vector3d acc_eigen = Convert_vector_to_eigen(acc);
+    Vector3d acc_eigen = ConvertVectorToEigen(acc);
     Vector3d e = acc_eigen / g_ - gb_m;
     DiagonalMatrix<double, 3> Kg_mat(Kgx_, Kgy_, Kgz_);
     Vector3d gb_p = gb_m + Kg_mat * e;
@@ -328,7 +329,7 @@ void AttitudeEstimator::Run_exp(SegmentIMURecording exp,
     // Write the vector to CSV
     Write_csv(file_name, vals);
 }
-int Ahrs_test() {
+int AHRS_test() {
     std::filesystem::path current_path = std::filesystem::current_path();
     cout << "Current working directory: " << current_path << endl;
     std::filesystem::path root_path = current_path / "..";
@@ -341,7 +342,7 @@ int Ahrs_test() {
     SegmentIMURecording imu_data = SegmentIMURecording(imu_file_path);
     double initial_heading_y = 0.0;
     double initial_heading_x = initial_heading_y - M_PI / 2;
-    vector<double> psi_initialized = Add_scalar_to_vector(imu_data.psi_,
+    vector<double> psi_initialized = AddScalarToVector(imu_data.psi_,
         -imu_data.psi_[0] + initial_heading_x);
     std::vector<std::pair<std::string, std::vector<double>>> vals = {
         {"psi", psi_initialized},
@@ -373,137 +374,12 @@ int Ahrs_test() {
     system(system_cmd.c_str());
     return 0;
 }
-BufferOfScalars::BufferOfScalars(int window_size) {
-    window_size_ = window_size;
-    accumulated_size_ = 0;
-}
-void BufferOfScalars::Add_data(double new_value) {
-    data_.push_back(new_value);
-    accumulated_size_ = data_.size();
-}
-vector<double> BufferOfScalars::Get_data() {
-    vector<double> result;
-    for (int i = 0; i < window_size_; i++) {
-        result.push_back(data_[0]);
-        data_.erase(data_.begin());
-    }
-    accumulated_size_ = data_.size();
-    return result;
-}
-void BufferOfScalars::Reset() {
-    for (int i = 0; i < accumulated_size_; i++) {
-        data_.pop_back();
-    }
-    accumulated_size_ = data_.size();
-}
 
-
-BufferOfVectors::BufferOfVectors(int window_size, int n_cols) {
-    window_size_ = window_size;
-    number_of_columns_ = n_cols;
-    accumulated_size_ = 0;
-}
-void BufferOfVectors::Add_data(vector<double> new_line) {
-    if (new_line.size() != number_of_columns_) {
-        throw std::invalid_argument("BufferOfVectors::Add_data: wrong number of columns");
-    }
-    data_.push_back(new_line);
-    accumulated_size_ = data_.size();
-}
-vector<vector<double>> BufferOfVectors::Get_data() {
-    vector<vector<double>>  result;
-    for (int i = 0; i < window_size_; i++) {
-        result.push_back(data_[0]);
-        data_.erase(data_.begin());
-    }
-    accumulated_size_ = data_.size();
-    return result;
-}
-void BufferOfVectors::Reset() {
-    for (int i = 0; i < accumulated_size_; i++) {
-        data_.pop_back();
-    }
-    accumulated_size_ = data_.size();
-}
-
-BufferOfMatrices::BufferOfMatrices(int window_size, int n_rows,
-    int n_cols) {
-    window_size_ = window_size;
-    number_of_rows_ = n_rows;
-    number_of_columns_ = n_cols;
-    accumulated_size_ = 0;
-}
-void BufferOfMatrices::Add_data(vector<vector<double>> new_mat) {
-    if (new_mat.size() != number_of_rows_) {
-        throw std::invalid_argument("BufferOfMatrices::Add_data: wrong number of rows");
-    }
-    if (new_mat[0].size() != number_of_columns_) {
-        throw std::invalid_argument("BufferOfMatrices::Add_data: wrong number of columns");
-    }
-    data_.push_back(new_mat);
-    accumulated_size_ = data_.size();
-}
-vector<vector<vector<double>>> BufferOfMatrices::Get_data() {
-    vector<vector<vector<double>>>  result;
-    for (int i = 0; i < window_size_; i++) {
-        result.push_back(data_[0]);
-        data_.erase(data_.begin());
-    }
-    accumulated_size_ = data_.size();
-    return result;
-}
-void BufferOfMatrices::Reset() {
-    for (int i = 0; i < accumulated_size_; i++) {
-        data_.pop_back();
-    }
-    accumulated_size_ = data_.size();
-}
-
-void Buffer_test() {
-    vector<vector<double>> IMU = { {0, 0, 0}, {1, 1, 1}, {2, 2, 2},
-        {3, 3, 3}, {4, 4, 4}, {5, 5, 5}, {6, 6, 6}, {7, 7, 7},
-        {8, 8, 8}, {9, 9, 9} };
-    int ws = 4;
-    int n_cols = 3;
-    BufferOfVectors buffer_obj(ws, n_cols);
-    for (int i = 0; i < IMU.size(); i++) {
-        buffer_obj.Add_data(IMU[i]);
-        std::cout << "accumulated size is " << buffer_obj.accumulated_size_ <<
-            endl;
-        std::cout << "last element = " << buffer_obj.data_.back()[0] << endl;
-        if (buffer_obj.accumulated_size_ >= buffer_obj.window_size_) {
-            vector<vector<double>> output(buffer_obj.window_size_,
-            vector<double>(buffer_obj.number_of_columns_));
-            output = buffer_obj.Get_data();
-            for (int i = 0; i < output.size(); i++) {
-                std::cout << output[i][0] << endl;
-            }
-            std::cout << "accumulated size is " <<
-            buffer_obj.accumulated_size_ << endl;
-        }
-    }
-    std::cout << "accumulated size is " << buffer_obj.accumulated_size_ << endl;
-    for (int i = 0; i < buffer_obj.data_.size(); i++) {
-        std::cout << buffer_obj.data_[i][0] << endl;
-    }
-    buffer_obj.Reset();
-    std::cout << "accumulated size after reset is " <<
-        buffer_obj.accumulated_size_ << endl;
-    for (int i = 0; i < buffer_obj.data_.size(); i++) {
-        std::cout << buffer_obj.data_[i][0] << endl;
-    }
-}
 vector<double> Diff(vector<double> u) {
     vector<double> diff(u.size());
     std::adjacent_difference(u.begin(), u.end(), diff.begin());
     diff.erase(diff.begin());
     return diff;
-}
-
-double Mean(vector<double> u) {
-    double sum = accumulate(u.begin(), u.end(), 0.0);
-    double m = sum / u.size();
-    return m;
 }
 
 vector<double> Rot_mat2euler(vector<vector<double>> R) {
@@ -576,31 +452,6 @@ Vector3d col3) {
     return mat_joined;
 }
 
-vector<double> Add_scalar_to_vector(vector<double> vec, double scalar) {
-    for (double& element : vec)
-        element += scalar;
-    return vec;
-}
-
-VectorXd Convert_vector_to_eigen(const vector<double>& vec) {
-    VectorXd vec_eigen(vec.size());
-    for (int i = 0; i < vec.size(); i++)
-        vec_eigen[i] = vec[i];
-    return vec_eigen;
-}
-
-MatrixXd Convert_matrix_to_eigen(const vector<vector<double>>& mat) {
-    int n_rows = mat.size();
-    int n_cols = mat[0].size();
-
-    MatrixXd mat_eigen(n_rows, n_cols);
-
-    for (int i = 0; i < n_rows; i++)
-        for (int j = 0; j < n_cols; j++)
-            mat_eigen(i, j) = mat[i][j];
-    return mat_eigen;
-}
-
 Matrix3d OrthonormalizeRotationMatrix(Matrix3d R) {
     // Rn = R.dot(np.linalg.inv(scipy.linalg.sqrtm(R.T.dot(R))))
     // # Rnb_m*(Rnb_m'*Rnb_m)^-0.5
@@ -611,24 +462,8 @@ Matrix3d OrthonormalizeRotationMatrix(Matrix3d R) {
     return Rn;
 }
 
-vector<double> Subtract_vectors(const vector<double> &vec1,
-const vector<double> &vec2) {
-    vector<double> res;
-    transform(vec1.begin(), vec1.end(), vec2.begin(), back_inserter(res),
-    [](double a, double b) { return a - b; });
-    return res;
-}
-
-vector<vector<double>> Subtract_matrices(const vector<vector<double>> &mat1,
-const vector<vector<double>> &mat2) {
-    vector<vector<double>> res;
-    transform(mat1.begin(), mat1.end(), mat2.begin(), back_inserter(res),
-    [](vector<double> a, vector<double> b) { return Subtract_vectors(a, b); });
-    return res;
-}
-
 vector<double> Rot_mat2quaternion(const vector<vector<double>>& R) {
-    MatrixXd r_eigen = Convert_matrix_to_eigen(R);
+    MatrixXd r_eigen = ConvertMatrixToEigen(R);
     // compiler wanna make sure we're passing 3x3 matrix
     Quaterniond q_eigen(r_eigen.block<3, 3>(0, 0));
     // scipy returns x,y,z,w
@@ -642,83 +477,6 @@ vector<vector<double>> Rot_mat2quaternion(
     vector<vector<double>> res;
     for (vector<vector<double>> mat : R)
         res.push_back(Rot_mat2quaternion(mat));
-    return res;
-}
-
-vector<double> Rot_mat2r6d(const vector<vector<double>>& R) {
-    vector<double> r6 = { R[0][0], R[1][0], R[2][0], R[0][1], R[1][1],
-        R[2][1], };
-    return r6;
-}
-
-vector<vector<double>> Rot_mat2r6d(const vector<vector<vector<double>>>& R) {
-    vector<vector<double>> res;
-    for (vector<vector<double>> mat : R)
-        res.push_back(Rot_mat2r6d(mat));
-    return res;
-}
-
-bool Number_in_range(double num, const vector<double>& limits) {
-    return (num > limits[0]) && (num < limits[1]);
-}
-
-vector<bool> Numbers_in_range(const vector<vector<double>>& nums,
-const vector<vector<double>>& limits) {
-    int n = nums.size();
-    vector<bool> res(n);
-    if (n == 0) {
-        return res;
-    }
-
-    int m = nums[0].size();
-    for (int i = 0; i < n; i++) {
-        bool r = true;
-        for (int j = 0; j < m; j++) {
-            r &= Number_in_range(nums[i][j], limits[j]);
-        }
-        res[i] = r;
-    }
-    return res;
-}
-
-vector<double> Linspace(double start, double end, size_t size) {
-    vector<double> vec(size);
-    vec[0] = start;     // exactly start
-    vec[size - 1] = end;    // exactly end
-
-    if (size > 2) {
-        double delta = (end - start) / (size - 1);
-        for (int i = 1; i < size - 1; i++) {
-            vec[i] = start + delta * i;
-        }
-    }
-    return vec;
-}
-
-double Weighted_average(const vector<double>& nums,
-const vector<double>& weights) {
-    int n = nums.size();
-    double total = 0;
-    double total_weights = 0;
-    for (int i = 0; i < n; i++) {
-        total += nums[i] * weights[i];
-        total_weights += weights[i];
-    }
-    return total / total_weights;
-}
-
-vector<double> Weighted_xy(const vector<vector<double>>& xy,
-const vector<double>& weights) {
-    int n = xy.size();
-    double x = 0;
-    double y = 0;
-    double total_weights = 0;
-    for (int i = 0; i < n; i++) {
-        x += xy[i][0] * weights[i];
-        y += xy[i][1] * weights[i];
-        total_weights += weights[i];
-    }
-    vector<double> res = { x / total_weights, y / total_weights };
     return res;
 }
 

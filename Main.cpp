@@ -15,6 +15,6 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "Tests/test_setup.hpp"
 
 int main() {
-    Ahrs_test();
+    AHRS_test();
     return 0;
 }

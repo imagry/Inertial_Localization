@@ -57,6 +57,14 @@ std::vector<double> MultiplyVectorByScalar(const std::vector<double> &vec,
 VectorXd ConvertVectorToEigen(const std::vector<double> &vec);
 
 /**
+ * @brief Converts a standard matrix to an Eigen matrix.
+ * 
+ * @param mat Standard matrix (vector of vectors) to convert
+ * @return MatrixXd Eigen matrix containing the same elements
+ */
+MatrixXd ConvertMatrixToEigen(const std::vector<std::vector<double>> &mat);
+
+/**
  * @brief Converts an Eigen vector to a standard vector.
  * 
  * @param vec_eigen Eigen vector to convert
@@ -97,6 +105,15 @@ double VectorNorm2D(const std::vector<double> &vec2d);
 std::vector<double> AbsVector(const std::vector<double> &vec);
 
 /**
+ * @brief Subtracts the second vector from the first vector element-wise.
+ * 
+ * @param vec1 First vector
+ * @param vec2 Second vector to subtract
+ * @return std::vector<double> Result of subtraction (vec1 - vec2)
+ */
+std::vector<double> SubtractVectors(const std::vector<double> &vec1, const std::vector<double> &vec2);
+
+/**
  * @brief Creates a sequence of evenly spaced values within a specified range.
  * 
  * @tparam T_arrange Type of values in the range (must support addition)
@@ -106,16 +123,64 @@ std::vector<double> AbsVector(const std::vector<double> &vec);
  * @return std::vector<T_arrange> Vector containing the sequence
  */
 template <typename T_arrange>
-std::vector<T_arrange> Arange(
-    T_arrange start,
-    T_arrange stop,
-    T_arrange step = 1) {
-    std::vector<T_arrange> values;
-    for (T_arrange value = start; value < stop; value += step) {
-        values.push_back(value);
+std::vector<T_arrange> Arange(T_arrange start, T_arrange stop, T_arrange step = 1) {
+    std::vector<T_arrange> result;
+    for (T_arrange i = start; i < stop; i += step) {
+        result.push_back(i);
     }
-    return values;
+    return result;
 }
+
+/**
+ * @brief Creates a linearly spaced vector of specified size between start and end values.
+ * 
+ * @param start First value in the sequence
+ * @param end Last value in the sequence
+ * @param size Number of elements in the sequence
+ * @return std::vector<double> Vector containing the linearly spaced sequence
+ */
+std::vector<double> Linspace(double start, double end, size_t size);
+
+/**
+ * @brief Checks if a number is within a specified range.
+ * 
+ * @param num Number to check
+ * @param limits Vector containing [min, max] range limits
+ * @return bool True if the number is within the range, false otherwise
+ */
+bool NumberInRange(double num, const std::vector<double>& limits);
+
+/**
+ * @brief Checks if multiple vectors are within specified ranges.
+ * 
+ * @param nums 2D vector of values to check
+ * @param limits 2D vector of range limits
+ * @return std::vector<bool> Vector of boolean results for each input vector
+ */
+std::vector<bool> NumbersInRange(const std::vector<std::vector<double>>& nums,
+                                const std::vector<std::vector<double>>& limits);
+
+/**
+ * @brief Calculates a weighted average of values.
+ * 
+ * @param nums Vector of values to average
+ * @param weights Vector of weights corresponding to each value
+ * @return double The weighted average
+ */
+double WeightedAverage(const std::vector<double>& nums,
+                       const std::vector<double>& weights);
+
+/**
+ * @brief Calculates a weighted average of 2D coordinates.
+ * 
+ * @param xy 2D vector of coordinates (each inner vector is [x, y])
+ * @param weights Vector of weights corresponding to each coordinate
+ * @return std::vector<double> The weighted average coordinate [x, y]
+ */
+std::vector<double> WeightedXY(const std::vector<std::vector<double>>& xy,
+                              const std::vector<double>& weights);
+
+/**
 /**
  * @brief Creates a sequence of evenly spaced double values (convenience overload).
  * 
@@ -133,6 +198,14 @@ std::vector<double> Arange(double start, double stop, double step);
  * @return std::vector<double> Vector of differences with size = u.size() - 1
  */
 std::vector<double> Diff(const std::vector<double> &u);
+
+/**
+ * @brief Calculate the mean value of a vector
+ * 
+ * @param u Input vector
+ * @return double Mean value
+ */
+double Mean(const std::vector<double> &u);
 
 //==============================================================================
 // Angle Operations

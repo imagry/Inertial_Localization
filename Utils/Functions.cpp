@@ -60,6 +60,19 @@ VectorXd ConvertVectorToEigen(const std::vector<double> &vec) {
     for (int i = 0; i < vec.size(); i++) vec_eigen[i] = vec[i];
     return vec_eigen;
 }
+
+MatrixXd ConvertMatrixToEigen(const std::vector<std::vector<double>> &mat) {
+    int n_rows = mat.size();
+    int n_cols = mat[0].size();
+
+    MatrixXd mat_eigen(n_rows, n_cols);
+
+    for (int i = 0; i < n_rows; i++)
+        for (int j = 0; j < n_cols; j++)
+            mat_eigen(i, j) = mat[i][j];
+    return mat_eigen;
+}
+
 std::vector<double> ConvertEigenToVector(const VectorXd &vec_eigen) {
     std::vector<double> vec(vec_eigen.size());
     for (int i = 0; i < vec_eigen.size(); i++) vec[i] = vec_eigen[i];
@@ -91,6 +104,14 @@ std::vector<double> AbsVector(const std::vector<double> &vec) {
     }
     return result;
 }
+
+std::vector<double> SubtractVectors(const std::vector<double> &vec1, const std::vector<double> &vec2) {
+    std::vector<double> res;
+    transform(vec1.begin(), vec1.end(), vec2.begin(), back_inserter(res),
+    [](double a, double b) { return a - b; });
+    return res;
+}
+
 std::vector<double> Arange(double start, double stop, double step = 1) {
     std::vector<double> values;
     for (double value = start; value < stop; value += step) {
@@ -98,6 +119,71 @@ std::vector<double> Arange(double start, double stop, double step = 1) {
     }
     return values;
 }
+
+std::vector<double> Linspace(double start, double end, size_t size) {
+    std::vector<double> vec(size);
+    vec[0] = start;     // exactly start
+    vec[size - 1] = end;    // exactly end
+
+    if (size > 2) {
+        double delta = (end - start) / (size - 1);
+        for (int i = 1; i < size - 1; i++) {
+            vec[i] = start + delta * i;
+        }
+    }
+    return vec;
+}
+
+bool NumberInRange(double num, const std::vector<double>& limits) {
+    return (num > limits[0]) && (num < limits[1]);
+}
+
+std::vector<bool> NumbersInRange(const std::vector<std::vector<double>>& nums,
+const std::vector<std::vector<double>>& limits) {
+    int n = nums.size();
+    std::vector<bool> res(n);
+    if (n == 0) {
+        return res;
+    }
+
+    int m = nums[0].size();
+    for (int i = 0; i < n; i++) {
+        bool r = true;
+        for (int j = 0; j < m; j++) {
+            r &= NumberInRange(nums[i][j], limits[j]);
+        }
+        res[i] = r;
+    }
+    return res;
+}
+
+double WeightedAverage(const std::vector<double>& nums,
+const std::vector<double>& weights) {
+    int n = nums.size();
+    double total = 0;
+    double total_weights = 0;
+    for (int i = 0; i < n; i++) {
+        total += nums[i] * weights[i];
+        total_weights += weights[i];
+    }
+    return total / total_weights;
+}
+
+std::vector<double> WeightedXY(const std::vector<std::vector<double>>& xy,
+const std::vector<double>& weights) {
+    int n = xy.size();
+    double x = 0;
+    double y = 0;
+    double total_weights = 0;
+    for (int i = 0; i < n; i++) {
+        x += xy[i][0] * weights[i];
+        y += xy[i][1] * weights[i];
+        total_weights += weights[i];
+    }
+    std::vector<double> res = { x / total_weights, y / total_weights };
+    return res;
+}
+
 //
 std::vector<double> Diff(const std::vector<double> &u) {
     std::vector<double> diff(u.size());
@@ -105,6 +191,13 @@ std::vector<double> Diff(const std::vector<double> &u) {
     diff.erase(diff.begin());
     return diff;
 }
+
+double Mean(const std::vector<double> &u) {
+    double sum = std::accumulate(u.begin(), u.end(), 0.0);
+    double m = sum / u.size();
+    return m;
+}
+
 std::vector<PreciseRadians> FoldAngles(const std::vector<PreciseRadians> &u) {
     // angles are folded to +-pi
     int num_of_samples = u.size();

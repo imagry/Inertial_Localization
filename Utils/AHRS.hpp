@@ -180,155 +180,11 @@ class AttitudeEstimator {
 };
 
 /**
- * @brief Buffer class for scalar values.
- * 
- * Manages a sliding window of scalar values with FIFO (First-In-First-Out) behavior.
- */
-class BufferOfScalars {
- public:
-    // Buffer data and parameters
-    vector<double> data_;
-    int window_size_;
-    int accumulated_size_;
-    
-    /**
-     * @brief Construct a new Buffer Of Scalars object
-     * 
-     * @param window_size Size of the sliding window
-     */
-    explicit BufferOfScalars(int window_size);
-    
-    /**
-     * @brief Add a new value to the buffer
-     * 
-     * @param new_value Value to add to the buffer
-     */
-    void Add_data(double new_value);
-    
-    /**
-     * @brief Get and remove the oldest data from the buffer
-     * 
-     * @return vector<double> Removed data elements
-     */
-    vector<double> Get_data();
-    
-    /**
-     * @brief Reset the buffer (clear all data)
-     */
-    void Reset();
-};
-
-/**
- * @brief Buffer class for vector values.
- * 
- * Manages a sliding window of vector values with FIFO behavior.
- */
-class BufferOfVectors {
- public:
-    // Buffer data and parameters
-    vector<vector<double>> data_;
-    int window_size_;
-    int accumulated_size_;
-    int number_of_columns_;
-    
-    /**
-     * @brief Construct a new Buffer Of Vectors object
-     * 
-     * @param window_size Size of the sliding window
-     * @param n_cols Number of columns in each vector
-     */
-    BufferOfVectors(int window_size, int n_cols);
-    
-    /**
-     * @brief Add a new vector to the buffer
-     * 
-     * @param new_line Vector to add to the buffer
-     */
-    void Add_data(vector<double> new_line);
-    
-    /**
-     * @brief Get and remove the oldest data from the buffer
-     * 
-     * @return vector<vector<double>> Removed data elements
-     */
-    vector<vector<double>> Get_data();
-    
-    /**
-     * @brief Reset the buffer (clear all data)
-     */
-    void Reset();
-};
-
-/**
- * @brief Buffer class for matrix values.
- * 
- * Manages a sliding window of matrix values with FIFO behavior.
- */
-class BufferOfMatrices {
- public:
-    // Buffer data and parameters
-    vector<vector<vector<double>>> data_;
-    int window_size_;
-    int accumulated_size_;
-    int number_of_rows_;
-    int number_of_columns_;
-    
-    /**
-     * @brief Construct a new Buffer Of Matrices object
-     * 
-     * @param window_size Size of the sliding window
-     * @param n_rows Number of rows in each matrix
-     * @param n_cols Number of columns in each matrix
-     */
-    BufferOfMatrices(int window_size, int n_rows, int n_cols);
-    
-    /**
-     * @brief Add a new matrix to the buffer
-     * 
-     * @param new_mat Matrix to add to the buffer
-     */
-    void Add_data(vector<vector<double>> new_mat);
-    
-    /**
-     * @brief Get and remove the oldest data from the buffer
-     * 
-     * @return vector<vector<vector<double>>> Removed data elements
-     */
-    vector<vector<vector<double>>> Get_data();
-    
-    /**
-     * @brief Reset the buffer (clear all data)
-     */
-    void Reset();
-};
-
-/**
- * @brief Test function for the buffer classes
- */
-void Buffer_test();
-
-/**
  * @brief Test function for the AHRS functionality
  * 
  * @return int Status code (0 for success)
  */
-int Ahrs_test();
-
-/**
- * @brief Calculate the differences between consecutive elements in a vector
- * 
- * @param u Input vector
- * @return vector<double> Vector of differences
- */
-vector<double> Diff(vector<double> u);
-
-/**
- * @brief Calculate the mean value of a vector
- * 
- * @param u Input vector
- * @return double Mean value
- */
-double Mean(vector<double> u);
+int AHRS_test();
 
 /**
  * @brief Convert a rotation matrix to Euler angles (phi, theta, psi)
@@ -353,31 +209,6 @@ vector<double> Rot_mat2euler(Matrix3d R);
  * @return Matrix3d Skew-symmetric matrix
  */
 Matrix3d Vec2SkewSimetric(vector<double> Vec);
-
-/**
- * @brief Add a scalar value to all elements of a vector
- * 
- * @param vec Input vector
- * @param scalar Scalar value to add
- * @return vector<double> Result vector
- */
-vector<double> Add_scalar_to_vector(vector<double> vec, double scalar);
-
-/**
- * @brief Convert a standard vector to Eigen vector
- * 
- * @param vec Input standard vector
- * @return VectorXd Eigen vector
- */
-VectorXd Convert_vector_to_eigen(const vector<double>& vec);
-
-/**
- * @brief Convert a standard matrix to Eigen matrix
- * 
- * @param mat Input standard matrix
- * @return MatrixXd Eigen matrix
- */
-MatrixXd Convert_matrix_to_eigen(const vector<vector<double>>& mat);
 
 /**
  * @brief Orthonormalize a rotation matrix
@@ -416,8 +247,6 @@ Vector3d col3);
  * @param vec2 Second vector
  * @return vector<double> Result vector
  */
-vector<double> Subtract_vectors(const vector<double> &vec1,
-const vector<double> &vec2);
 
 /**
  * @brief Subtract two matrices element-wise
@@ -426,8 +255,6 @@ const vector<double> &vec2);
  * @param mat2 Second matrix
  * @return vector<vector<double>> Result matrix
  */
-vector<vector<double>> Subtract_matrices(const vector<vector<double>> &mat1,
-const vector<vector<double>> &mat2);
 
 /**
  * @brief Convert a rotation matrix to quaternion representation
@@ -452,15 +279,6 @@ vector<vector<double>> Rot_mat2quaternion(
  * @param R Rotation matrix
  * @return vector<double> 6D representation
  */
-vector<double> Rot_mat2r6d(const vector<vector<double>>& R);
-
-/**
- * @brief Convert multiple rotation matrices to 6D representations
- * 
- * @param R Array of rotation matrices
- * @return vector<vector<double>> Array of 6D representations
- */
-vector<vector<double>> Rot_mat2r6d(const vector<vector<vector<double>>>& R);
 
 /**
  * @brief Check if a number is within a specified range
@@ -469,47 +287,6 @@ vector<vector<double>> Rot_mat2r6d(const vector<vector<vector<double>>>& R);
  * @param limits Range limits [min, max]
  * @return bool True if number is within range
  */
-bool Number_in_range(double num, const vector<double>& limits);
-
-/**
- * @brief Check if vectors of numbers are within specified ranges
- * 
- * @param nums Array of numbers to check
- * @param limits Array of range limits
- * @return vector<bool> Results for each vector
- */
-vector<bool> Numbers_in_range(const vector<vector<double>>& nums,
-const vector<vector<double>>& limits);
-
-/**
- * @brief Generate a linearly spaced vector between start and end values
- * 
- * @param start Start value
- * @param end End value
- * @param size Number of elements
- * @return vector<double> Linearly spaced vector
- */
-vector<double> Linspace(double start, double end, size_t size);
-
-/**
- * @brief Calculate weighted average of numbers
- * 
- * @param nums Vector of numbers
- * @param weights Vector of weights
- * @return double Weighted average
- */
-double Weighted_average(const vector<double>& nums,
-const vector<double>& weights);
-
-/**
- * @brief Calculate weighted average of 2D coordinates
- * 
- * @param xy Vector of 2D coordinates
- * @param weights Vector of weights
- * @return vector<double> Weighted average coordinate
- */
-vector<double> Weighted_xy(const vector<vector<double>>& xy,
-const vector<double>& weights);
 
 /**
  * @brief Write dataset to a CSV file
