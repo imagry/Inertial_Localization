@@ -16,6 +16,7 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #define _USE_MATH_DEFINES
 #include "AHRS.hpp"// NOLINT
 #include "Functions.hpp"// NOLINT
+#include "DataHandling.hpp"// NOLINT
 using std::fstream;
 using std::stringstream;
 using std::istringstream;
@@ -327,7 +328,7 @@ void AttitudeEstimator::Run_exp(SegmentIMURecording exp,
     };
 
     // Write the vector to CSV
-    Write_csv(file_name, vals);
+    PrintToCSV(file_name, vals);
 }
 int AHRS_test() {
     std::filesystem::path current_path = std::filesystem::current_path();
@@ -350,7 +351,7 @@ int AHRS_test() {
         {"theta", imu_data.theta_}
     };
     // Write the imu Euler angles to CSV
-    Write_csv(current_path / "../data/temp_results"/"psi_phi_theta-cpp.csv",
+    PrintToCSV(current_path / "../data/temp_results"/"psi_phi_theta-cpp.csv",
         vals);
     Matrix3d Rnb;
     Rnb << 1, 0, 0,
@@ -478,40 +479,6 @@ vector<vector<double>> Rot_mat2quaternion(
     for (vector<vector<double>> mat : R)
         res.push_back(Rot_mat2quaternion(mat));
     return res;
-}
-
-void Write_csv(std::string filename, std::vector<std::pair<std::string,
-std::vector<double>>> dataset) {
-    // Make a CSV file with one or more columns of integer values
-    // Each column of data is represented by the
-    // pair <column name, column data>
-    //   as std::pair<std::string, std::vector<int>>
-    // The dataset is represented as a vector of these columns
-    // Note that all columns should be the same size
-
-    // Create an output filestream object
-    std::ofstream myFile(filename);
-
-    // Send column names to the stream
-    for (int j = 0; j < dataset.size(); ++j) {
-        myFile << dataset.at(j).first;
-        // No comma at end of line
-        if (j != dataset.size() - 1) myFile << ",";
-    }
-    myFile << "\n";
-
-    // Send data to the stream
-    for (int i = 0; i < dataset.at(0).second.size(); ++i) {
-        for (int j = 0; j < dataset.size(); ++j) {
-            myFile << dataset.at(j).second.at(i);
-            // No comma at end of line
-            if (j != dataset.size() - 1) myFile << ",";
-        }
-        myFile << "\n";
-    }
-
-    // Close the file
-    myFile.close();
 }
 
 pair<vector<double>, vector<double>> Split_array_of_2d_coor(

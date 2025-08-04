@@ -54,41 +54,11 @@ class SegmentIMURecording {
     vector<vector<double>> acc_;
     double dt_ = -1;
     int number_of_IMU_samples_;
-
+    
     /**
      * @brief Default constructor
      */
     SegmentIMURecording() = default;
-    
-    /**
-     * @brief Construct a new Segment IMU Recording with specified time step
-     * 
-     * @param time Timestamp vector for IMU samples
-     * @param gyro Gyroscope data (angular velocities)
-     * @param acc Accelerometer data
-     * @param dt Time step between samples
-     */
-    SegmentIMURecording(
-        const vector<double>& time,
-        const vector<vector<double>>& gyro,
-        const vector<vector<double>>& acc,
-        double dt)
-        : time_IMU_(time), gyro_(gyro), acc_(acc), dt_(dt) {
-    }
-    
-    /**
-     * @brief Construct a new Segment IMU Recording (dt will be computed)
-     * 
-     * @param time Timestamp vector for IMU samples
-     * @param gyro Gyroscope data (angular velocities)
-     * @param acc Accelerometer data
-     */
-    SegmentIMURecording(
-        const vector<double>& time,
-        const vector<vector<double>>& gyro,
-        const vector<vector<double>>& acc)
-        : time_IMU_(time), gyro_(gyro), acc_(acc) {
-    }
     
     /**
      * @brief Construct a new Segment IMU Recording from a file
@@ -241,22 +211,6 @@ Matrix3d Construct_rot_mat_from_columns(Vector3d col1, Vector3d col2,
 Vector3d col3);
 
 /**
- * @brief Subtract two vectors element-wise
- * 
- * @param vec1 First vector
- * @param vec2 Second vector
- * @return vector<double> Result vector
- */
-
-/**
- * @brief Subtract two matrices element-wise
- * 
- * @param mat1 First matrix
- * @param mat2 Second matrix
- * @return vector<vector<double>> Result matrix
- */
-
-/**
  * @brief Convert a rotation matrix to quaternion representation
  * 
  * @param R Rotation matrix
@@ -272,30 +226,6 @@ vector<double> Rot_mat2quaternion(const vector<vector<double>>& R);
  */
 vector<vector<double>> Rot_mat2quaternion(
     const vector<vector<vector<double>>>& R);
-
-/**
- * @brief Convert a rotation matrix to 6D representation
- * 
- * @param R Rotation matrix
- * @return vector<double> 6D representation
- */
-
-/**
- * @brief Check if a number is within a specified range
- * 
- * @param num Number to check
- * @param limits Range limits [min, max]
- * @return bool True if number is within range
- */
-
-/**
- * @brief Write dataset to a CSV file
- * 
- * @param filename Output filename
- * @param dataset Dataset as pairs of column name and data
- */
-void Write_csv(std::string filename, std::vector<std::pair<std::string,
-std::vector<double>>> dataset);
 
 /**
  * @brief Split an array of 2D coordinates into separate X and Y arrays
