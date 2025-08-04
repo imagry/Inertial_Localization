@@ -303,3 +303,19 @@ double LimitValue(double u, double u_min, double u_max);
  * @return int Index of minimum value
  */
 int Argmin(std::vector<double> vec);
+
+/**
+ * @brief Calculate the Euclidean norm (2-norm) of a 2D vector
+ * 
+ * @param vec 2D vector
+ * @return double Euclidean norm
+ */
+double Vector_2_norm(const std::vector<double>& vec);
+
+/**
+ * @brief Calculate the norms of multiple 2D vectors
+ * 
+ * @param nX2_array Array of 2D vectors
+ * @return std::vector<double> Vector of norms
+ */
+std::vector<double> Norm_nX2_array(const std::vector<std::vector<double>>& nX2_array);

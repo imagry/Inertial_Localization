@@ -200,17 +200,6 @@ Matrix3d OrthonormalizeRotationMatrix(Matrix3d R);
 Matrix3d TRIAD(Vector3d fb, Vector3d mb, Vector3d fn, Vector3d mn);
 
 /**
- * @brief Construct a rotation matrix from three column vectors
- * 
- * @param col1 First column
- * @param col2 Second column
- * @param col3 Third column
- * @return Matrix3d Constructed rotation matrix
- */
-Matrix3d Construct_rot_mat_from_columns(Vector3d col1, Vector3d col2,
-Vector3d col3);
-
-/**
  * @brief Convert a rotation matrix to quaternion representation
  * 
  * @param R Rotation matrix
@@ -226,31 +215,6 @@ vector<double> Rot_mat2quaternion(const vector<vector<double>>& R);
  */
 vector<vector<double>> Rot_mat2quaternion(
     const vector<vector<vector<double>>>& R);
-
-/**
- * @brief Split an array of 2D coordinates into separate X and Y arrays
- * 
- * @param array_of_2d_coor Array of 2D coordinates
- * @return pair<vector<double>, vector<double>> Pair of X and Y arrays
- */
-pair<vector<double>, vector<double>> Split_array_of_2d_coor(
-    vector<vector<double>> array_of_2d_coor);
-
-/**
- * @brief Calculate the Euclidean norm (2-norm) of a 2D vector
- * 
- * @param vec 2D vector
- * @return double Euclidean norm
- */
-double Vector_2_norm(const vector<double>& vec);
-
-/**
- * @brief Calculate the norms of multiple 2D vectors
- * 
- * @param nX2_array Array of 2D vectors
- * @return vector<double> Vector of norms
- */
-vector<double> Norm_nX2_array(const vector<vector<double>>& nX2_array);
 
 /**
  * @brief Convert quaternion to Euler angles

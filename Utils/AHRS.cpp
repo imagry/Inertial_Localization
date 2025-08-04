@@ -376,13 +376,6 @@ int AHRS_test() {
     return 0;
 }
 
-vector<double> Diff(vector<double> u) {
-    vector<double> diff(u.size());
-    std::adjacent_difference(u.begin(), u.end(), diff.begin());
-    diff.erase(diff.begin());
-    return diff;
-}
-
 vector<double> Rot_mat2euler(vector<vector<double>> R) {
     vector<double> euler(3);
 
@@ -446,13 +439,6 @@ Matrix3d TRIAD(Vector3d fb, Vector3d mb, Vector3d fn, Vector3d mn) {
     return Cbn;
 }
 
-Matrix3d Construct_rot_mat_from_columns(Vector3d col1, Vector3d col2,
-Vector3d col3) {
-    Matrix3d mat_joined;
-    mat_joined << col1, col2, col3;
-    return mat_joined;
-}
-
 Matrix3d OrthonormalizeRotationMatrix(Matrix3d R) {
     // Rn = R.dot(np.linalg.inv(scipy.linalg.sqrtm(R.T.dot(R))))
     // # Rnb_m*(Rnb_m'*Rnb_m)^-0.5
@@ -479,38 +465,6 @@ vector<vector<double>> Rot_mat2quaternion(
     for (vector<vector<double>> mat : R)
         res.push_back(Rot_mat2quaternion(mat));
     return res;
-}
-
-pair<vector<double>, vector<double>> Split_array_of_2d_coor(
-vector<vector<double>> array_of_2d_coor) {
-    vector<double> X;
-    vector<double> Y;
-    for (int i = 0; i < array_of_2d_coor.size(); i++) {
-        X.push_back(array_of_2d_coor[i][0]);
-        Y.push_back(array_of_2d_coor[i][1]);
-    }
-    pair<vector<double>, vector<double>> result(X, Y);
-    return result;
-}
-
-double Vector_2_norm(const vector<double>& vec) {
-    // like np.linalg.norm(vec)
-    if (vec.size() != 2) {
-        throw std::invalid_argument("Vector_2_norm: invalid dimensions (must be 2)");
-    }
-    return sqrt(pow(vec[0], 2) + pow(vec[1], 2));
-}
-
-vector<double> Norm_nX2_array(const vector<vector<double>>& nX2_array) {
-    // like np.linalg.norm(nX2_array, axis=1)
-    if (nX2_array.empty() || nX2_array[0].size() != 2) {
-        throw std::invalid_argument("Norm_nX2_array: invalid dimensions (must be nx2)");
-    }
-    vector<double> arr_norm;
-    for (int i = 0; i < nX2_array.size(); i++) {
-        arr_norm.push_back(Vector_2_norm(nX2_array[i]));
-    }
-    return arr_norm;
 }
 
 vector<double> Quaternion2euler(const vector<double>& q) {

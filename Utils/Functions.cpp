@@ -305,3 +305,23 @@ int Argmin(std::vector<double> vec) {
     int idx = std::min_element(vec.begin(), vec.end()) - vec.begin();
     return idx;
 }
+
+double Vector_2_norm(const std::vector<double>& vec) {
+    // like np.linalg.norm(vec)
+    if (vec.size() != 2) {
+        throw std::invalid_argument("Vector_2_norm: invalid dimensions (must be 2)");
+    }
+    return sqrt(pow(vec[0], 2) + pow(vec[1], 2));
+}
+
+std::vector<double> Norm_nX2_array(const std::vector<std::vector<double>>& nX2_array) {
+    // like np.linalg.norm(nX2_array, axis=1)
+    if (nX2_array.empty() || nX2_array[0].size() != 2) {
+        throw std::invalid_argument("Norm_nX2_array: invalid dimensions (must be nx2)");
+    }
+    std::vector<double> arr_norm;
+    for (int i = 0; i < nX2_array.size(); i++) {
+        arr_norm.push_back(Vector_2_norm(nX2_array[i]));
+    }
+    return arr_norm;
+}
