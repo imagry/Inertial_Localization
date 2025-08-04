@@ -40,8 +40,10 @@ SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
     double time_factor, timestamp_thresh;
 
     int gyro_x_ind, gyro_y_ind, gyro_z_ind;
+    int gyro_b_x_ind, gyro_b_y_ind, gyro_b_z_ind;
     int acc_x_ind, acc_y_ind, acc_z_ind;
-
+    int acc_b_x_ind, acc_b_y_ind, acc_b_z_ind;
+    int pitch_ind, roll_ind, yaw_ind;
     if (file.is_open()) {
         getline(file, line);    // read first line - header names
         int column_counter = 0;
@@ -107,9 +109,21 @@ SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
             gyro_y_ind = 14;
             gyro_z_ind = 15;
 
+            gyro_b_x_ind = 16;
+            gyro_b_y_ind = 17;
+            gyro_b_z_ind = 18;
+
             acc_x_ind = 1;
             acc_y_ind = 2;
             acc_z_ind = 3;
+            
+            acc_b_x_ind = 4;
+            acc_b_y_ind = 5;
+            acc_b_z_ind = 6;
+
+            pitch_ind = 7;
+            roll_ind = 8;
+            yaw_ind = 9;
         } else {
             str.clear();
             str << "unknown file format with " << column_counter << " columns";
@@ -117,7 +131,7 @@ SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
                 << " columns" << endl;
             throw std::runtime_error(str.str());
         }
-
+        
         while (getline(file, line)) {   // insert new line from file to line
             row.clear();
             stringstream str(line);
@@ -149,11 +163,11 @@ SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
                 } else if (file_fmt == aidriver) {
                     double angle_factor = M_PI / 180;
                     this->psi_.push_back(
-                        stod(row[7]) * angle_factor);   // azimuth
+                        stod(row[yaw_ind]) * angle_factor);   // azimuth
                     this->phi_.push_back(
-                        stod(row[8]) * angle_factor);   // pitch
+                        stod(row[roll_ind]) * angle_factor);   // roll
                     this->theta_.push_back(
-                        stod(row[9]) * angle_factor);   // roll
+                        stod(row[pitch_ind]) * angle_factor);   // pitch
                 }
             }
             double gyro_SF;
@@ -166,12 +180,12 @@ SegmentIMURecording::SegmentIMURecording(std::filesystem::path file_path) {
                 istringstream ss(row[timestamp_ind]);
                 ss >> time_sample;
                 this->time_IMU_.push_back(time_sample * time_factor);
-                this->gyro_.push_back({ stod(row[gyro_x_ind]) * gyro_SF,
-                                       stod(row[gyro_y_ind]) * gyro_SF,
-                                       stod(row[gyro_z_ind]) * gyro_SF});
-                this->acc_.push_back({ stod(row[acc_x_ind]),
-                    stod(row[acc_y_ind]),
-                    stod(row[acc_z_ind]) });
+                this->gyro_.push_back({ (stod(row[gyro_x_ind]) - stod(row[gyro_b_x_ind])) * gyro_SF,
+                                       (stod(row[gyro_y_ind]) - stod(row[gyro_b_y_ind])) * gyro_SF,
+                                       (stod(row[gyro_z_ind]) - stod(row[gyro_b_z_ind])) * gyro_SF});
+                this->acc_.push_back({ (stod(row[acc_x_ind]) - stod(row[acc_b_x_ind])),
+                                       (stod(row[acc_y_ind]) - stod(row[acc_b_y_ind])),
+                                       (stod(row[acc_z_ind]) - stod(row[acc_b_z_ind])) });
             }
         }
         std::cout << "Read " << this->time_IMU_.size() <<
@@ -317,16 +331,9 @@ void AttitudeEstimator::Run_exp(SegmentIMURecording exp,
 int Ahrs_test() {
     std::filesystem::path current_path = std::filesystem::current_path();
     cout << "Current working directory: " << current_path << endl;
-    // std::filesystem::path imu_file_path = current_path / "data" /
-    // "hao_leg2.csv";
-    // std::filesystem::path imu_file_path = current_path / "data" /
-    // "indoor_output_2023-07-03_10_35_58_edited.csv";
-    // std::filesystem::path imu_file_name =
-    // "indoor_output_2023-07-05_08_47_03_edited.csv";
-    // std::filesystem::path imu_file_location = current_path
-    // / "../data/backed_data_files";
+    std::filesystem::path root_path = current_path / "..";
     std::filesystem::path imu_file_name = "imu.csv";
-    std::filesystem::path imu_file_location = current_path /
+    std::filesystem::path imu_file_location = root_path /
         "data/backed_data_files/2025-05-21T11_52_50";
     std::filesystem::path imu_file_path = imu_file_location / imu_file_name;
     cout << "csv file path is : " << imu_file_path << endl;
@@ -341,41 +348,29 @@ int Ahrs_test() {
         {"phi", imu_data.phi_},
         {"theta", imu_data.theta_}
     };
-    // Write the vector to CSV
-    // Write_csv("data/hao_leg2-psi_phi_theta-cpp.csv", vals);
-    Write_csv(current_path / "data/temp_results"/"psi_phi_theta-cpp.csv",
+    // Write the imu Euler angles to CSV
+    Write_csv(current_path / "../data/temp_results"/"psi_phi_theta-cpp.csv",
         vals);
     Matrix3d Rnb;
     Rnb << 1, 0, 0,
            0, 1, 0,
            0, 0, 1;
     // double Ka = 0.00026096;
-    double Ka = 0.005;
+    double Ka = 0.001;
     AttitudeEstimator AE_object = AttitudeEstimator(
         static_cast<double>(0.01), Ka, "NED");
     AE_object.Rnb_ = Rnb;
     // AE_object.Run_exp(imu_data, "CPP_AHRS_results_on_hao_leg2.csv");
-    std::filesystem::path output_file_path = current_path /
+    std::filesystem::path output_file_path = root_path /
         "data/temp_results"/"CPP_AHRS_results.csv";
     AE_object.Run_exp(imu_data, output_file_path, initial_heading_x);
-    // std::string system_cmd = "python ../Tests/python/plot_inputs.py --path "
-    //         + output_file_path.string()
-    //         + " --x time_IMU time_IMU time_IMU
-    // --y phi_hat theta_hat psi_hat";
-    // std::string system_cmd =
-    //     "source Tests/python/vehicle_control_env/bin/activate && "
-    //     "python3 Tests/python/plot_AHRS_results.py --path_estimated "
-    //         + output_file_path.string()
-    //         + " --path_reference "
-    //         + imu_file_path.string();
     std::string system_cmd =
-    "bash -c 'source Tests/python/vehicle_control_env/bin/activate && "
-    "python3 Tests/python/plot_AHRS_results.py --path_estimated "
+    "bash -c 'source " + root_path.string() + "/Tests/python/vehicle_control_env/bin/activate && "
+    "python3 " + root_path.string() + "/Tests/python/plot_AHRS_results.py --path_estimated "
         + output_file_path.string()
         + " --path_reference "
         + imu_file_path.string() + "'";
     system(system_cmd.c_str());
-    // "time_IMU,phi_hat,phi_e,theta_hat,theta_e,psi_hat,psi_e"
     return 0;
 }
 BufferOfScalars::BufferOfScalars(int window_size) {

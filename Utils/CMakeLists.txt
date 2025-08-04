@@ -1,8 +1,6 @@
 set(SOURCE_FILES
   Functions.cpp
   Classes.cpp
-  # B10: Removed as part of control code removal
-  # Controllers.cpp
   localization_debug_states.cpp
   DataHandling.cpp
   AHRS.cpp

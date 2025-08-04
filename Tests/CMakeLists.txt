@@ -8,7 +8,7 @@ FetchContent_MakeAvailable(json)
 # Keep the existing test library for backward compatibility but exclude it from build by default
 # due to compile errors that need to be fixed separately
 add_library(Tests EXCLUDE_FROM_ALL ${TEST_SOURCES})
-target_link_libraries(Tests Utils control_api_wrapper nlohmann_json::nlohmann_json)
+target_link_libraries(Tests Utils localization_api_wrapper nlohmann_json::nlohmann_json)
 
 # Create a new test executable that uses Google Test
 set(GTEST_SOURCES
@@ -45,7 +45,7 @@ target_link_libraries(run_tests
     gmock
     gmock_main
     Utils
-    ControlAPI
+    LocalizationAPI
 )
 
 # Enable testing for CTest integration

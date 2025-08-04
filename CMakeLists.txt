@@ -26,10 +26,10 @@ add_subdirectory(Utils)
 add_subdirectory(Tests)
 add_subdirectory(wrapper)
 
-add_library(ControlAPI
+add_library(LocalizationAPI
     ahrs_loc_handler.cpp
 )
-target_link_libraries(ControlAPI PUBLIC Utils nlohmann_json::nlohmann_json)
-add_executable(VehicleControlOperational Main.cpp)
+target_link_libraries(LocalizationAPI PUBLIC Utils nlohmann_json::nlohmann_json)
+add_executable(InertialLocalization Main.cpp)
 # Remove the Tests library from the link list to avoid dependency on the broken Tests
-target_link_libraries(VehicleControlOperational PUBLIC Utils ControlAPI)
+target_link_libraries(InertialLocalization PUBLIC Utils LocalizationAPI)
