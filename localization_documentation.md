@@ -202,31 +202,111 @@ python carpose_offline_calculation.py --trip_path /path/to/trip_data \
                                       --output_dir ./results
 ```
 
-## 6. Test Localization Script
+## 6. Unit Testing with Google Test
+
+The Inertial Localization system implements a comprehensive suite of unit tests using the Google Test framework. These tests verify the correctness of individual components and their interactions.
+
+### 6.1 Test Suite Overview
+
+#### 6.1.1 AttitudeEstimator Tests
+- **File**: `Tests/test_AHRS.cpp`
+- **Test Cases**:
+  - **GyroPromotion Tests**: Verify correct rotation matrix updates along each axis
+    - X-axis rotation: Confirms Euler angles [1.0,0,0] rad after applying rotation
+    - Y-axis rotation: Confirms Euler angles [0,1.0,0] rad after applying rotation
+    - Z-axis rotation: Confirms Euler angles [0,0,1.0] rad after applying rotation
+  - **UpdateGravity Tests**: Verify correct attitude updates from accelerometer measurements
+    - Tests positive and negative roll (X-axis) rotations
+    - Tests positive and negative pitch (Y-axis) rotations
+    - Verifies gravity vector alignment in body and navigation frames
+
+#### 6.1.2 ShortTermLocalization Tests
+- **File**: `Tests/test_short_term_localization.cpp`
+- **Test Cases**:
+  - **Straight Line Driving**: Tests position updates when driving at constant speed with different headings
+  - **Steering Tests**: Verifies position and heading changes with steering inputs
+  - **Speed Estimation**: Tests speed calculations from wheel odometry
+
+#### 6.1.3 AHRSLocHandler Tests
+- **File**: `Tests/test_ahrs_loc_handler.cpp`
+- **Test Cases**:
+  - **InitializationFromDefaultFiles**: Verifies handler initialization with configuration files
+    - Checks initial position is at origin
+    - Confirms heading estimation mode is set properly
+    - Tests GetPosition() and GetVehicleHeading() functionality
+  - **VehicleStateReset**: Tests the ability to reset vehicle state to known values
+  - **RearWheelSpeedUpdates**: Verifies that wheel speed averaging works correctly
+    - Configures handler to use "rear_average" speed estimation mode
+    - Sets different speeds for left (5.2 m/s) and right (4.8 m/s) wheels
+    - Confirms internal state speed is set to the average (5.0 m/s)
+
+### 6.2 Building the Tests
+
+To build the unit tests from scratch:
+
+```bash
+# Create and navigate to build directory
+mkdir -p cmake-bin
+cd cmake-bin
+
+# Configure the project with CMake
+cmake ..
+
+# Build the test executable
+make run_tests
+```
+
+### 6.3 Running the Tests
+
+You can run all tests or specific test cases:
+
+```bash
+# Run all tests
+./Tests/run_tests
+
+# Run a specific test suite
+./Tests/run_tests --gtest_filter=AHRSLocHandlerTest.*
+
+# Run a specific test case
+./Tests/run_tests --gtest_filter=AHRSLocHandlerTest.RearWheelSpeedUpdates
+
+# Run tests with detailed output
+./Tests/run_tests --gtest_output=xml:test_results.xml
+```
+
+### 6.4 Test Output
+
+The tests provide detailed output including:
+- Success/failure status for each test case
+- Detailed error messages when tests fail
+- Expected vs. actual values for assertions that fail
+- Exception information if thrown during test execution
+
+## 7. Test Localization Script
 
 The `test_localization.sh` script provides a comprehensive regression test for the localization functionality.
 
-### 6.1 Overview
-- **Location**: `/home/eranvertz/git/Inertial_Localization/test_localization.sh`
+### 7.1 Overview
+- **Location**: `/home/eranvertz/git/Inertial_Localization/Tests/test_localization.sh`
 - **Purpose**: Verify localization algorithm works correctly after code changes
 - **Operation**: Runs the offline calculation script and compares results with expected values
 
-### 6.2 Key Features
+### 7.2 Key Features
 - **Build Verification**: Ensures Python bindings build correctly
 - **Result Validation**: Compares calculated position and heading with expected values
 - **Tolerance Testing**: Accepts small differences within specified tolerance
 - **Automatic Updates**: Optional flag to update expected values after intentional changes
 
-### 6.3 Workflow
+### 7.3 Workflow
 1. Build the Python binding module
 2. Run the offline calculation script with a test dataset
 3. Extract final position (x, y) and heading values
 4. Compare against expected values with defined tolerance
 5. Report success or failure with detailed error information
 
-### 6.4 Command Line Usage
+### 7.4 Command Line Usage
 ```bash
-./test_localization.sh [--update-expected] [--trip-path PATH]
+./Tests/test_localization.sh [--update-expected] [--trip-path PATH]
 ```
 
 

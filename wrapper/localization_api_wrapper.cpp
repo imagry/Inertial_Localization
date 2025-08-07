@@ -31,22 +31,8 @@ static json merged_configs(
     const std::map<std::string, std::string>& external_config,
     const std::string& internal_config_path) {
     json config(json::parse(std::ifstream(internal_config_path)));
-    const std::string dlc_prefix = "dlc_";
-
     for (const auto& item : external_config) {
-        if (item.first.rfind(dlc_prefix, 0) == 0) { // Check if key starts with dlc_prefix
-            std::string key_without_prefix = item.first.substr(dlc_prefix.size());
-            if (config["Longitudinal_controller"].contains(key_without_prefix)) {
-                if (config["Longitudinal_controller"][key_without_prefix].is_number_integer()) {
-                    config["Longitudinal_controller"][key_without_prefix] = std::stoi(item.second);
-                } else if (config["Longitudinal_controller"][key_without_prefix].is_number_float()) {
-                    config["Longitudinal_controller"][key_without_prefix] = std::stof(item.second);
-                } else if (config["Longitudinal_controller"][key_without_prefix].is_string()) {
-                    config["Longitudinal_controller"][key_without_prefix] = item.second;
-                }
-            }
-        } else {
-            if (!config.contains(item.first)) { continue; }
+        if (!config.contains(item.first)) { continue; }
             if (config[item.first].is_number_integer()) {
                 config[item.first] = std::stoi(item.second);
             } else if (config[item.first].is_number_float()) {
@@ -54,7 +40,6 @@ static json merged_configs(
             } else if (config[item.first].is_string()) {
                 config[item.first] = item.second;
             }
-        }
     }
 
     return config;
@@ -64,22 +49,8 @@ static json merged_configs(
     const std::map<std::string, std::string>& external_config,
     const json& internal_config) {
     json config(internal_config);
-    const std::string dlc_prefix = "dlc_";
-
     for (const auto& item : external_config) {
-        if (item.first.rfind(dlc_prefix, 0) == 0) { // Check if key starts with dlc_prefix
-            std::string key_without_prefix = item.first.substr(dlc_prefix.size());
-            if (config["Longitudinal_controller"].contains(key_without_prefix)) {
-                if (config["Longitudinal_controller"][key_without_prefix].is_number_integer()) {
-                    config["Longitudinal_controller"][key_without_prefix] = std::stoi(item.second);
-                } else if (config["Longitudinal_controller"][key_without_prefix].is_number_float()) {
-                    config["Longitudinal_controller"][key_without_prefix] = std::stof(item.second);
-                } else if (config["Longitudinal_controller"][key_without_prefix].is_string()) {
-                    config["Longitudinal_controller"][key_without_prefix] = item.second;
-                }
-            }
-        } else {
-            if (!config.contains(item.first)) { continue; }
+        if (!config.contains(item.first)) { continue; }
             if (config[item.first].is_number_integer()) {
                 config[item.first] = std::stoi(item.second);
             } else if (config[item.first].is_number_float()) {
@@ -87,7 +58,6 @@ static json merged_configs(
             } else if (config[item.first].is_string()) {
                 config[item.first] = item.second;
             }
-        }
     }
     return config;
 }

@@ -11,8 +11,8 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Define paths
-REPO_ROOT=$(pwd)
+# Define paths - adjusted for the new location in the Tests directory
+REPO_ROOT=$(realpath $(dirname $0)/..)
 BUILD_DIR="${REPO_ROOT}/build"
 TEST_SCRIPT="${REPO_ROOT}/Tests/python/python_binding/carpose_offline_calculation.py"
 DEFAULT_TRIP_PATH="${REPO_ROOT}/data/backed_data_files/2025-05-21T11_52_50"
