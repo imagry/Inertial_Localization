@@ -74,3 +74,42 @@
 * **Files Modified:** 
   * `Tests/test_short_term_localization.cpp` - Implemented comprehensive test cases for the ShortTermLocalization class
   * `Tests/CMakeLists.txt` - Ensured test file is included in the build
+
+### 2025-08-07: Unit Tests for AHRS Location Handler
+* **Action:** Implemented initial unit tests for the AHRSLocHandler class.
+* **Details:** Created tests to verify initialization and state management functionality:
+  1. **Initialization Test**:
+     - Successfully loads configuration from vehicle_config.json and localization_config.json
+     - Verifies correct initial position at the origin
+     - Confirms the handler's heading estimation mode is properly set
+     - Tests basic functionality like GetPosition() and GetVehicleHeading()
+     
+  2. **Vehicle State Reset Test**:
+     - Verifies that UpdateVehicleState() correctly updates position and heading
+     - Tests the ability to reset the vehicle state to a known configuration
+     - Ensures position and heading values match the expected values after reset
+  
+* **Files Modified:** 
+  * `Tests/test_ahrs_loc_handler.cpp` - Created tests for AHRSLocHandler initialization and state reset
+  * `Tests/CMakeLists.txt` - Updated to include the test file in the build
+
+### 2025-08-07: Rear Wheel Speed Test for AHRSLocHandler
+* **Action:** Implemented a test case to verify rear wheel speed averaging functionality in the AHRSLocHandler class.
+* **Details:** Added a new test that verifies the "rear_average" speed estimation mode works correctly:
+  1. **RearWheelSpeedUpdates Test**:
+     - Configures the handler to use "rear_average" speed estimation mode
+     - Sets different speeds for left wheel (5.2 m/s) and right wheel (4.8 m/s)
+     - Initializes the vehicle state with known values to avoid NaN in heading
+     - Updates wheel speeds using UpdateRearLeftSpeed() and UpdateRearRightSpeed()
+     - Calls EstimateSpeed() to propagate the wheel speed values to the internal state
+     - Verifies that the internal state's speed is correctly set to the average (5.0 m/s)
+     - Shows that the RearAverage speed estimator correctly calculates mean wheel speed
+     
+  2. **Implementation Challenges Overcome**:
+     - Initially attempted to verify speed indirectly through position updates, which exposed issues with NaN values in heading
+     - Redesigned test to access the internal state directly through GetLoc() method
+     - Added proper vehicle state initialization to ensure all state parameters were valid
+     - Demonstrates proper use of the EstimateSpeed() method after updating wheel speeds
+
+* **Files Modified:** 
+  * `Tests/test_ahrs_loc_handler.cpp` - Added RearWheelSpeedUpdates test

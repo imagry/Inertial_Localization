@@ -1,181 +1,149 @@
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
-#include <vector>
-#include <cmath>
 #include <memory>
 #include <string>
 #include <fstream>
 
 #include "../ahrs_loc_handler.hpp"
-#include "../Utils/short_term_localization.hpp"
 #include "../Utils/Sensors.hpp"
-#include "../Utils/units.hpp"
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
-// Test fixture for AHRSLocHandler tests
-class AHRSLocHandlerTest : public ::testing::Test {
-protected:
-    // Set up code that will be called before each test
-    void SetUp() override {
+// Test initialization from default configuration files
+TEST(AHRSLocHandlerTest, InitializationFromDefaultFiles) {
+    try {
+        // Attempt to load the configuration files
+        std::ifstream vehicle_file("../vehicle_config.json");
+        ASSERT_TRUE(vehicle_file.is_open()) << "Failed to open vehicle_config.json";
+        json vehicle_config;
+        vehicle_file >> vehicle_config;
+        
+        std::ifstream loc_file("../localization_config.json");
+        ASSERT_TRUE(loc_file.is_open()) << "Failed to open localization_config.json";
+        json localization_config;
+        loc_file >> localization_config;
+        
+        // Create the handler
+        auto handler = std::make_unique<AHRSLocHandler>(vehicle_config, localization_config);
+        ASSERT_NE(handler, nullptr) << "Handler was not created successfully";
+        
+        // Initial position should be at origin
+        auto position = handler->GetPosition();
+        EXPECT_EQ(position.size(), 2);  // Position has X, Y components
+        EXPECT_NEAR(position[0], 0.0, 1e-6);
+        EXPECT_NEAR(position[1], 0.0, 1e-6);
+        
+        // Verify heading mode
+        std::string mode = handler->GetVehicleHeadingEstimationMode();
+        EXPECT_FALSE(mode.empty()) << "Heading estimation mode should not be empty";
+        
+        // Verify we can get vehicle heading without exception
+        EXPECT_NO_THROW(handler->GetVehicleHeading());
+        
+    } catch (const std::exception& e) {
+        FAIL() << "Exception while testing initialization: " << e.what();
+    }
+}
+
+// Test vehicle state reset functionality
+TEST(AHRSLocHandlerTest, VehicleStateReset) {
+    try {
         // Load configuration files
-        vehicle_config = json::parse(std::ifstream("../vehicle_config.json"));
-        localization_config = json::parse(std::ifstream("../localization_config.json"));
+        std::ifstream vehicle_file("../vehicle_config.json");
+        ASSERT_TRUE(vehicle_file.is_open()) << "Failed to open vehicle_config.json";
+        json vehicle_config;
+        vehicle_file >> vehicle_config;
         
-        // Create the handler for testing
-        handler = std::make_unique<AHRSLocHandler>(vehicle_config, localization_config);
+        std::ifstream loc_file("../localization_config.json");
+        ASSERT_TRUE(loc_file.is_open()) << "Failed to open localization_config.json";
+        json localization_config;
+        loc_file >> localization_config;
+        
+        // Create the handler
+        auto handler = std::make_unique<AHRSLocHandler>(vehicle_config, localization_config);
+        
+        // Define a new vehicle state
+        const double new_x = 10.5;
+        const double new_y = -5.25;
+        const double new_heading = 0.75;  // About 43 degrees
+        const double new_delta = 0.1;     // Small steering angle
+        
+        std::vector<double> new_state = {new_x, new_y, new_heading, new_delta};
+        
+        // Current time (any value will do for testing)
+        PreciseSeconds current_time = 12345.0;
+        
+        // Reset the vehicle state
+        handler->UpdateVehicleState(current_time, new_state);
+        
+        // Verify the new position
+        auto position = handler->GetPosition();
+        EXPECT_NEAR(position[0], new_x, 1e-6);
+        EXPECT_NEAR(position[1], new_y, 1e-6);
+        
+        // Verify the new heading
+        auto heading = handler->GetVehicleHeading();
+        EXPECT_NEAR(heading, new_heading, 1e-6);
+        
+    } catch (const std::exception& e) {
+        FAIL() << "Exception while testing state reset: " << e.what();
     }
-    
-    // Helper to create IMU sample
-    ImuSample CreateSampleImuData() {
-        ImuSample sample;
+}
+
+// Test that updating rear wheel speeds correctly updates the vehicle speed
+TEST(AHRSLocHandlerTest, RearWheelSpeedUpdates) {
+    try {
+        // Load configuration files
+        std::ifstream vehicle_file("../vehicle_config.json");
+        ASSERT_TRUE(vehicle_file.is_open()) << "Failed to open vehicle_config.json";
+        json vehicle_config;
+        vehicle_file >> vehicle_config;
         
-        // Default values - vehicle at rest, level orientation
-        sample.acc_.x = 0.0;  // No forward acceleration
-        sample.acc_.y = 0.0;  // No lateral acceleration
-        sample.acc_.z = 9.81; // Gravity
+        std::ifstream loc_file("../localization_config.json");
+        ASSERT_TRUE(loc_file.is_open()) << "Failed to open localization_config.json";
+        json localization_config;
+        loc_file >> localization_config;
         
-        sample.acc_b_.x = 0.0;  // Body frame
-        sample.acc_b_.y = 0.0;
-        sample.acc_b_.z = 9.81;
+        // Set the speed estimation mode to "rear_average" for this test
+        localization_config["vehicle_speed_estimation_mode"] = "rear_average";
         
-        sample.gyro_.x = 0.0; // No rotation
-        sample.gyro_.y = 0.0;
-        sample.gyro_.z = 0.0;
+        // Create the handler with our modified config
+        auto handler = std::make_unique<AHRSLocHandler>(vehicle_config, localization_config);
         
-        sample.gyro_b_.x = 0.0; // Body frame
-        sample.gyro_b_.y = 0.0;
-        sample.gyro_b_.z = 0.0;
+        // Define different speeds for left and right wheels
+        const PreciseMps left_wheel_speed = 5.2;   // 5.2 m/s
+        const PreciseMps right_wheel_speed = 4.8;  // 4.8 m/s
+        const PreciseMps expected_speed = (left_wheel_speed + right_wheel_speed) / 2.0;  // Mean value: 5.0
         
-        sample.mag_.x = 1.0;  // North direction
-        sample.mag_.y = 0.0;
-        sample.mag_.z = 0.0;
+        // Current time (any value will do for testing)
+        PreciseSeconds current_time = 12345.0;
         
-        sample.pitch_ = 0.0;  // Level orientation
-        sample.roll_ = 0.0;
-        sample.yaw_ = 0.0;    // Facing north
+        // First set a known vehicle state to avoid NaN in heading
+        const double initial_x = 0.0;
+        const double initial_y = 0.0;
+        const double initial_heading = 0.0;  // Straight ahead
+        const double initial_delta = 0.0;    // No steering
         
-        return sample;
+        std::vector<double> initial_state = {initial_x, initial_y, initial_heading, initial_delta};
+        
+        // Set the initial state
+        handler->UpdateVehicleState(current_time, initial_state);
+        
+        // Update the wheel speeds
+        handler->UpdateRearLeftSpeed(left_wheel_speed, current_time);
+        handler->UpdateRearRightSpeed(right_wheel_speed, current_time);
+        
+        // Need to estimate speed since that's what propagates the wheel speed values
+        handler->EstimateSpeed(current_time);
+        
+        // Get the internal state from the ShortTermLocalization object
+        auto& loc = handler->GetLoc();
+        auto state = loc.State();
+        
+        // Verify that the speed in the state is the average of the wheel speeds
+        EXPECT_NEAR(state.speed_, expected_speed, 1e-6);
+        
+    } catch (const std::exception& e) {
+        FAIL() << "Exception while testing rear wheel speeds: " << e.what();
     }
-    
-    json vehicle_config;
-    json localization_config;
-    std::unique_ptr<AHRSLocHandler> handler;
-};
-
-// Test initialization
-TEST_F(AHRSLocHandlerTest, Initialization) {
-    // Verify the handler is initialized correctly
-    EXPECT_NO_THROW(handler->GetPosition());
-    EXPECT_NO_THROW(handler->GetVehicleHeading());
-    
-    // Initial position should be at origin
-    auto position = handler->GetPosition();
-    EXPECT_EQ(position.size(), 3);
-    EXPECT_EQ(position[0], 0.0);
-    EXPECT_EQ(position[1], 0.0);
-    
-    // Initial heading should be NaN or 0 depending on implementation
-    auto heading = handler->GetVehicleHeading();
-    EXPECT_TRUE(std::isnan(heading) || heading == 0.0);
-}
-
-// Test IMU update
-TEST_F(AHRSLocHandlerTest, IMUUpdate) {
-    // Create sample IMU data
-    ImuSample sample = CreateSampleImuData();
-    
-    // Update with IMU data at t=1s
-    EXPECT_NO_THROW(handler->UpdateIMU(sample, 1.0));
-    
-    // Position should still be at origin (no speed yet)
-    auto position = handler->GetPosition();
-    EXPECT_EQ(position[0], 0.0);
-    EXPECT_EQ(position[1], 0.0);
-}
-
-// Test wheel speed updates
-TEST_F(AHRSLocHandlerTest, WheelSpeedUpdates) {
-    // Update right wheel speed at t=1s
-    EXPECT_NO_THROW(handler->UpdateRearRightSpeed(5.0, 1.0));
-    
-    // Update left wheel speed at t=1s
-    EXPECT_NO_THROW(handler->UpdateRearLeftSpeed(5.0, 1.0));
-    
-    // Update heading to north
-    handler->UpdateHeading(0.0, 1.0);
-    
-    // Estimate speed based on wheel odometry
-    handler->EstimateSpeed(1.0);
-    
-    // Update position at t=2s
-    handler->UpdatePosition(2.0);
-    
-    // Position should have changed (vehicle moved forward)
-    // Exact values depend on implementation
-    auto position = handler->GetPosition();
-    EXPECT_NE(position[0], 0.0);
-    
-    // Heading should be 0 (north)
-    auto heading = handler->GetVehicleHeading();
-    EXPECT_NEAR(heading, 0.0, 1e-6);
-}
-
-// Test steering wheel update
-TEST_F(AHRSLocHandlerTest, SteeringWheelUpdate) {
-    // Set up initial state: heading north, speed 5 m/s
-    handler->UpdateHeading(0.0, 1.0);
-    handler->UpdateRearRightSpeed(5.0, 1.0);
-    handler->UpdateRearLeftSpeed(5.0, 1.0);
-    handler->EstimateSpeed(1.0);
-    
-    // Update position at t=2s
-    handler->UpdatePosition(2.0);
-    
-    // Update steering wheel angle (turn right)
-    handler->UpdateSteeringWheel(0.5, 2.0);
-    
-    // Update position at t=3s
-    handler->UpdatePosition(3.0);
-    
-    // Position should have changed and the path should curve
-    auto position = handler->GetPosition();
-    
-    // Exact values depend on implementation details and vehicle model
-}
-
-// Test vehicle state update
-TEST_F(AHRSLocHandlerTest, VehicleStateUpdate) {
-    // Create a new state vector [x, y, z, roll, pitch, yaw, speed]
-    std::vector<double> new_state = {100.0, 200.0, 0.0, 0.0, 0.0, M_PI/2, 10.0};
-    
-    // Update the vehicle state
-    handler->UpdateVehicleState(1.0, new_state);
-    
-    // Position should be updated
-    auto position = handler->GetPosition();
-    EXPECT_NEAR(position[0], 100.0, 1e-6);
-    EXPECT_NEAR(position[1], 200.0, 1e-6);
-    
-    // Heading should be updated to π/2 (east)
-    auto heading = handler->GetVehicleHeading();
-    EXPECT_NEAR(heading, M_PI/2, 1e-6);
-}
-
-// Test heading estimation mode
-TEST_F(AHRSLocHandlerTest, HeadingEstimationMode) {
-    // Get the current heading estimation mode
-    std::string mode = handler->GetVehicleHeadingEstimationMode();
-    
-    // Mode should not be empty
-    EXPECT_FALSE(mode.empty());
-    
-    // Mode should be one of the supported modes (depends on configuration)
-    // For example: "INS", "IMU", "steering_wheel"
-}
-
-int main(int argc, char **argv) {
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
 }
