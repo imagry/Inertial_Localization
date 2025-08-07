@@ -133,9 +133,9 @@ def main():
         sys.exit(1)
     
     # Initialize vehicle state (position at origin, zero heading)
-    # initial_time = 0.0  # Start at time 0
-    # initial_state = [0.0, 0.0, external_car_pose["psi"][0], 0.0]  # [x, y, heading, velocity]
-    # loc_handler.UpdateVehicleState(initial_time, initial_state)
+    initial_time = -1.0  # Start at time 0
+    initial_state = [0.0, 0.0, external_car_pose["psi"][0], 0.0]  # [x, y, heading, velocity]
+    loc_handler.UpdateVehicleState(initial_time, initial_state)
     # localization is initialized to zero from the LocState initialization so we dont have to initialize. 
     # dont initialize the clock to 0 because it causes a bug in the dt.
     # Prepare for tracking estimated car pose
