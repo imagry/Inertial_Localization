@@ -33,3 +33,44 @@
   * `Utils/Functions.hpp` - Added multiple function declarations with standardized naming conventions
   * `Utils/Functions.cpp` - Added implementations for all moved functions
   * `Utils/DataHandling.hpp` - Added or updated as needed for PrintToCSV functionality
+
+### 2025-08-06: Unit Tests for Attitude Estimation
+* **Action:** Implemented comprehensive unit tests for the AttitudeEstimator class.
+* **Details:** Created test cases to verify the core functionality of the attitude estimation algorithms:
+  1. **GyroPromotion Tests**: Verified correct rotation matrix updates for:
+     - X-axis rotation: Applying 100 samples of [1,0,0] rad/s rotation and confirming the resulting Euler angles are [1.0,0,0] rad
+     - Y-axis rotation: Applying 100 samples of [0,1,0] rad/s rotation and confirming the resulting Euler angles are [0,1.0,0] rad
+     - Z-axis rotation: Applying 100 samples of [0,0,1] rad/s rotation and confirming the resulting Euler angles are [0,0,1.0] rad
+  
+  2. **UpdateGravity Tests**: Verified correct attitude updates from accelerometer measurements:
+     - X-axis positive rotation: Using acceleration vector corresponding to a 1-degree roll and confirming correct Euler angles
+     - X-axis negative rotation: Using acceleration vector corresponding to a -1-degree roll and confirming correct Euler angles
+     - Y-axis positive rotation: Using acceleration vector corresponding to a 1-degree pitch and confirming correct Euler angles
+     - Y-axis negative rotation: Using acceleration vector corresponding to a -1-degree pitch and confirming correct Euler angles
+     - For each test, verified both the Euler angles and the alignment of the gravity vector in the body and navigation frames
+
+* **Files Modified:** 
+  * `Tests/test_AHRS.cpp` - Added new test file with comprehensive test cases for the AttitudeEstimator class
+  * `Tests/CMakeLists.txt` - Updated to include the new test file in the build
+
+### 2025-08-07: Unit Tests for Short Term Localization
+* **Action:** Implemented comprehensive unit tests for the ShortTermLocalization class.
+* **Details:** Created test cases to verify the core functionality of the localization algorithms:
+  1. **Straight Line Driving Tests**:
+     - Basic straight line driving: Verified correct position update when driving straight at a constant speed
+     - Driving with various headings: Created tests for 45, 90, -45, and -90 degree headings
+     - Verified both NED and ENU coordinate system conversions
+  
+  2. **Steering Tests**:
+     - Verified position and heading updates when using steering_wheel mode with +30 degree steering angle
+     - Verified position and heading updates when using steering_wheel mode with -30 degree steering angle
+     - Confirmed correct bicycle model heading changes based on steering angle
+  
+  3. **Speed Estimation Tests**:
+     - Implemented test for rear wheels speed averaging functionality
+     - Verified that when using "rear_average" mode, the vehicle speed state is updated to the average of rear wheel speeds
+     - Tested with different left and right wheel speeds to confirm correct averaging
+
+* **Files Modified:** 
+  * `Tests/test_short_term_localization.cpp` - Implemented comprehensive test cases for the ShortTermLocalization class
+  * `Tests/CMakeLists.txt` - Ensured test file is included in the build

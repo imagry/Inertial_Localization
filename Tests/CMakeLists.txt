@@ -15,9 +15,9 @@ set(GTEST_SOURCES
     # Add your test source files here
     test_gtest_sample.cpp
     test_AHRS.cpp
+    test_short_term_localization.cpp
     # Temporarily comment out these files until we fix the issues
     # test_attitude_estimator.cpp
-    # test_short_term_localization.cpp
     # test_ahrs_loc_handler.cpp
 )
 

@@ -52,15 +52,6 @@ class ShortTermLocalization {
     PreciseSeconds Clock() const;
     WheelOdometrySample* GetRearWheelsOdometry();
 
-    void UpdateIMU(PreciseSeconds time_stamp, Mps2Precise acc_x,
-                   Mps2Precise acc_y, Mps2Precise acc_z, Mps2Precise acc_x_b,
-                   Mps2Precise acc_y_b, Mps2Precise acc_z_b,
-                   PreciseRadians pitch, PreciseRadians roll,
-                   PreciseRadians yaw, RadiansPerSec gyro_x,
-                   RadiansPerSec gyro_y, RadiansPerSec gyro_z,
-                   RadiansPerSec gyro_x_b, RadiansPerSec gyro_y_b,
-                   RadiansPerSec gyro_z_b, Gauss mag_x, Gauss mag_y,
-                   Gauss mag_z);
     void UpdateIMU(const ImuSample& sample);
     void UpdateRearRightSpeed(PreciseMps rear_right_speed,
         PreciseSeconds time_stamp);
@@ -72,7 +63,5 @@ class ShortTermLocalization {
     void UpdateDelta(PreciseRadians delta);
     void ResetVehicleState(PreciseSeconds clock,
                            const LocState& state);
-    void UpdatePosition(PreciseSeconds clock);
-    // void UpdateFrontAxlePosition(PreciseRadians delta, PreciseSeconds clock);
     void UpdateFrontAxlePosition(PreciseSeconds clock);
 };

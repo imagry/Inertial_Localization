@@ -41,39 +41,6 @@ PreciseSeconds ShortTermLocalization::Clock() const {
     return update_time_;
 }
 
-void ShortTermLocalization::UpdateIMU(
-    PreciseSeconds time_stamp, Mps2Precise acc_x, Mps2Precise acc_y,
-    Mps2Precise acc_z, Mps2Precise acc_x_b, Mps2Precise acc_y_b,
-    Mps2Precise acc_z_b, PreciseRadians pitch, PreciseRadians roll,
-    PreciseRadians yaw, RadiansPerSec gyro_x, RadiansPerSec gyro_y,
-    RadiansPerSec gyro_z, RadiansPerSec gyro_x_b, RadiansPerSec gyro_y_b,
-    RadiansPerSec gyro_z_b, Gauss mag_x, Gauss mag_y, Gauss mag_z) {
-    std::lock_guard<std::mutex> guard(lock_);
-    IMU_.time_stamp = time_stamp;
-    IMU_.acc_.x = acc_x;
-    IMU_.acc_.y = acc_y;
-    IMU_.acc_.z = acc_z;
-    IMU_.acc_b_.x = acc_x_b;
-    IMU_.acc_b_.y = acc_y_b;
-    IMU_.acc_b_.z = acc_z_b;
-    IMU_.pitch_ = pitch;
-    IMU_.roll_ = roll;
-    IMU_.yaw_ = yaw;
-    IMU_.gyro_.x = gyro_x;
-    IMU_.gyro_.y = gyro_y;
-    IMU_.gyro_.z = gyro_z;
-    IMU_.gyro_b_.x = gyro_x_b;
-    IMU_.gyro_b_.y = gyro_y_b;
-    IMU_.gyro_b_.z = gyro_z_b;
-    IMU_.mag_.x = mag_x;
-    IMU_.mag_.y = mag_y;
-    IMU_.mag_.z = mag_z;
-    if (vehicle_heading_estimation_mode_ == "INS") {
-        // update the heading state with the IMU yaw state. in the future this
-        // should be replaced with AHRS/EKF filtering
-        state_.psi_ = IMU_.yaw_;
-    }
-}
 void ShortTermLocalization::UpdateIMU(const ImuSample& sample) {
     std::lock_guard<std::mutex> guard(lock_);
     IMU_ = sample;
@@ -99,10 +66,8 @@ void ShortTermLocalization::UpdateRearLeftSpeed(
 }
 void ShortTermLocalization::UpdateSpeed(PreciseMps speed) {
     std::lock_guard<std::mutex> guard(lock_);
-    // TODO(Dor): add switch statement over estimator
-    // Update estimator, then set state_.speed_ to estimation
     state_.speed_ = speed;
-    // std::cout << "SPEED SET IN LOC: " << speed << "\n";
+    
 }
 
 void ShortTermLocalization::UpdateHeading(PreciseRadians psi) {
@@ -122,26 +87,12 @@ void ShortTermLocalization::ResetVehicleState(
     std::lock_guard<std::mutex> guard(lock_);
     state_ = state;
     update_time_ = clock;
-    // std::cout << "ShortTermLocalization::ResetVehicleState:"<< "\n";
-    // std::cout << "State reset to: p = [" << state_.pos_[0] << ", " << 
-    //                                         state_.pos_[1] << ", " << state_.psi_<<"]\n";
-    // std::cout << "Time reset to: " << clock << "\n";
 }
-void ShortTermLocalization::UpdatePosition(PreciseSeconds clock) {
-    // this method will be generalize to any control point along the wheelbase
-    // for now dont use!!!!!!
 
-    // double dt = clock - update_time_;
-    // update_time_ = clock;
-    // double dx = cos(psi_) * speed_ * dt;
-    // double dy = sin(psi_) * speed_ * dt;
-    // pos_[0] += dx;
-    // pos_[1] += dy;
-}
 void ShortTermLocalization::UpdateFrontAxlePosition(PreciseSeconds clock) {
     std::lock_guard<std::mutex> guard(lock_);
     double dt = 0;
-    if (update_time_ > 0) {
+    if (update_time_ >= 0) {
         dt = clock - update_time_;
     }
     update_time_ = clock;

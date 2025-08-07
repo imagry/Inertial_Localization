@@ -195,7 +195,7 @@ Matrix3d OrthonormalizeRotationMatrix(Matrix3d R);
  * @param mb Second vector in body frame
  * @param fn First vector in navigation frame
  * @param mn Second vector in navigation frame
- * @return Matrix3d Rotation matrix from body to navigation frame
+ * @return Matrix3d Rotation matrix from navigation to body frame
  */
 Matrix3d TRIAD(Vector3d fb, Vector3d mb, Vector3d fn, Vector3d mn);
 
