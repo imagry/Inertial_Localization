@@ -113,3 +113,20 @@
 
 * **Files Modified:** 
   * `Tests/test_ahrs_loc_handler.cpp` - Added RearWheelSpeedUpdates test
+
+### 2025-08-07: Refactored Test Script Location
+* **Action:** Moved test_localization.sh from the repository root to the Tests directory for better organization.
+* **Details:** 
+  1. **Path Adjustments**: 
+     - Modified the script to use relative paths based on its new location
+     - Updated the REPO_ROOT variable to use `$(realpath $(dirname $0)/..)` to determine the parent directory
+     - Verified that all path references continue to work from the new location
+     
+  2. **Script Functionality**:
+     - Ensured the script can still locate all necessary resources (Python scripts, data files)
+     - Confirmed the help message displays correctly with updated path references
+     - Maintained all existing functionality while improving the project structure
+     
+* **Files Modified:**
+  * `test_localization.sh` - Moved from root directory to Tests directory
+  * `Tests/test_localization.sh` - Created with updated paths and made executable
