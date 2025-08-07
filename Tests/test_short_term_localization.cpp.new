@@ -39,8 +39,13 @@ TEST_F(ShortTermLocalizationTest, StraightLineDriving) {
     // 3. Update front axle position after 1 second
     localizer->UpdateFrontAxlePosition(1.0);
     
-    // 4. Get the state and verify correct
+    // 4. Output the state and verify correct
     auto state = localizer->State();
+    std::cout << "State (NED) after 1 second:" << std::endl;
+    std::cout << "Position: [" << state.pos_[0] << ", " << state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << state.psi_ << " rad" << std::endl;
+    std::cout << "Steering angle: " << state.delta_ << " rad" << std::endl;
+    std::cout << "Speed: " << state.speed_ << " m/s" << std::endl;
     
     // For straight line driving with heading 0, after 1 second at 1 m/s,
     // we should have moved 1 meter north (in NED coordinates)
@@ -50,8 +55,13 @@ TEST_F(ShortTermLocalizationTest, StraightLineDriving) {
     EXPECT_NEAR(state.delta_, 0.0, 1e-6);   // Steering angle should remain 0
     EXPECT_NEAR(state.speed_, 1.0, 1e-6);   // Speed should remain 1 m/s
     
-    // 5. Get the ENU state and verify correct
+    // 5. Output the ENU state and verify correct
     auto enu_state = localizer->StateENU();
+    std::cout << "State (ENU) after 1 second:" << std::endl;
+    std::cout << "Position: [" << enu_state.pos_[0] << ", " << enu_state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << enu_state.psi_ << " rad" << std::endl;
+    std::cout << "Steering angle: " << enu_state.delta_ << " rad" << std::endl;
+    std::cout << "Speed: " << enu_state.speed_ << " m/s" << std::endl;
     
     // In ENU, a forward motion to the north in NED becomes a forward motion to the east
     // and the heading 0 (north) in NED becomes heading of -0 (0 but negated) in ENU
@@ -89,8 +99,11 @@ TEST_F(ShortTermLocalizationTest, DrivingWith45DegreeHeading) {
     // Update front axle position after 1 second
     localizer->UpdateFrontAxlePosition(1.0);
     
-    // Get the state and verify correct
+    // Output the state and verify correct
     auto state = localizer->State();
+    std::cout << "State (NED) with 45-degree heading after 1 second:" << std::endl;
+    std::cout << "Position: [" << state.pos_[0] << ", " << state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << state.psi_ << " rad" << std::endl;
     
     // For 45-degree heading, after 1 second at 1 m/s,
     // we should have moved sqrt(2)/2 meters north and sqrt(2)/2 meters east in NED
@@ -103,8 +116,11 @@ TEST_F(ShortTermLocalizationTest, DrivingWith45DegreeHeading) {
     EXPECT_NEAR(state.delta_, 0.0, 1e-6);          // Steering angle should remain 0
     EXPECT_NEAR(state.speed_, 1.0, 1e-6);          // Speed should remain 1 m/s
     
-    // Get the ENU state and verify correct
+    // Output the ENU state and verify correct
     auto enu_state = localizer->StateENU();
+    std::cout << "State (ENU) with 45-degree heading after 1 second:" << std::endl;
+    std::cout << "Position: [" << enu_state.pos_[0] << ", " << enu_state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << enu_state.psi_ << " rad" << std::endl;
     
     // In ENU, the conversion is:
     // x_enu = x_ned
@@ -144,8 +160,11 @@ TEST_F(ShortTermLocalizationTest, DrivingWith90DegreeHeading) {
     // Update front axle position after 1 second
     localizer->UpdateFrontAxlePosition(1.0);
     
-    // Get the state and verify correct
+    // Output the state and verify correct
     auto state = localizer->State();
+    std::cout << "State (NED) with 90-degree heading after 1 second:" << std::endl;
+    std::cout << "Position: [" << state.pos_[0] << ", " << state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << state.psi_ << " rad" << std::endl;
     
     // For 90-degree heading, after 1 second at 1 m/s,
     // we should have moved 0 meters north and 1 meter east in NED
@@ -158,8 +177,11 @@ TEST_F(ShortTermLocalizationTest, DrivingWith90DegreeHeading) {
     EXPECT_NEAR(state.delta_, 0.0, 1e-6);          // Steering angle should remain 0
     EXPECT_NEAR(state.speed_, 1.0, 1e-6);          // Speed should remain 1 m/s
     
-    // Get the ENU state and verify correct
+    // Output the ENU state and verify correct
     auto enu_state = localizer->StateENU();
+    std::cout << "State (ENU) with 90-degree heading after 1 second:" << std::endl;
+    std::cout << "Position: [" << enu_state.pos_[0] << ", " << enu_state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << enu_state.psi_ << " rad" << std::endl;
     
     // In ENU, the conversion is:
     // x_enu = x_ned
@@ -199,8 +221,11 @@ TEST_F(ShortTermLocalizationTest, DrivingWithNegative45DegreeHeading) {
     // Update front axle position after 1 second
     localizer->UpdateFrontAxlePosition(1.0);
     
-    // Get the state and verify correct
+    // Output the state and verify correct
     auto state = localizer->State();
+    std::cout << "State (NED) with -45-degree heading after 1 second:" << std::endl;
+    std::cout << "Position: [" << state.pos_[0] << ", " << state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << state.psi_ << " rad" << std::endl;
     
     // For -45-degree heading, after 1 second at 1 m/s,
     // we should have moved sqrt(2)/2 meters north and -sqrt(2)/2 meters east in NED
@@ -213,8 +238,11 @@ TEST_F(ShortTermLocalizationTest, DrivingWithNegative45DegreeHeading) {
     EXPECT_NEAR(state.delta_, 0.0, 1e-6);          // Steering angle should remain 0
     EXPECT_NEAR(state.speed_, 1.0, 1e-6);          // Speed should remain 1 m/s
     
-    // Get the ENU state and verify correct
+    // Output the ENU state and verify correct
     auto enu_state = localizer->StateENU();
+    std::cout << "State (ENU) with -45-degree heading after 1 second:" << std::endl;
+    std::cout << "Position: [" << enu_state.pos_[0] << ", " << enu_state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << enu_state.psi_ << " rad" << std::endl;
     
     // In ENU, the conversion is:
     // x_enu = x_ned
@@ -254,8 +282,11 @@ TEST_F(ShortTermLocalizationTest, DrivingWithNegative90DegreeHeading) {
     // Update front axle position after 1 second
     localizer->UpdateFrontAxlePosition(1.0);
     
-    // Get the state and verify correct
+    // Output the state and verify correct
     auto state = localizer->State();
+    std::cout << "State (NED) with -90-degree heading after 1 second:" << std::endl;
+    std::cout << "Position: [" << state.pos_[0] << ", " << state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << state.psi_ << " rad" << std::endl;
     
     // For -90-degree heading, after 1 second at 1 m/s,
     // we should have moved 0 meters north and -1 meter east in NED
@@ -268,8 +299,11 @@ TEST_F(ShortTermLocalizationTest, DrivingWithNegative90DegreeHeading) {
     EXPECT_NEAR(state.delta_, 0.0, 1e-6);          // Steering angle should remain 0
     EXPECT_NEAR(state.speed_, 1.0, 1e-6);          // Speed should remain 1 m/s
     
-    // Get the ENU state and verify correct
+    // Output the ENU state and verify correct
     auto enu_state = localizer->StateENU();
+    std::cout << "State (ENU) with -90-degree heading after 1 second:" << std::endl;
+    std::cout << "Position: [" << enu_state.pos_[0] << ", " << enu_state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << enu_state.psi_ << " rad" << std::endl;
     
     // In ENU, the conversion is:
     // x_enu = x_ned
@@ -310,8 +344,12 @@ TEST_F(ShortTermLocalizationTest, DrivingWithZeroHeadingAnd30DegreeSteering) {
     // Update front axle position after 1 second
     localizer->UpdateFrontAxlePosition(1.0);
     
-    // Get the state and verify correct
+    // Output the state and verify correct
     auto state = localizer->State();
+    std::cout << "State (NED) with 0-degree heading and +30-degree steering after 1 second:" << std::endl;
+    std::cout << "Position: [" << state.pos_[0] << ", " << state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << state.psi_ << " rad" << std::endl;
+    std::cout << "Steering angle: " << state.delta_ << " rad" << std::endl;
     
     // With 0-degree heading and +30-degree steering, after 1 second at 1 m/s,
     // we expect position to change as if the vehicle was heading at +30 degrees
@@ -330,8 +368,12 @@ TEST_F(ShortTermLocalizationTest, DrivingWithZeroHeadingAnd30DegreeSteering) {
     EXPECT_NEAR(state.delta_, steering_angle, 1e-6); // Steering angle should remain PI/6
     EXPECT_NEAR(state.speed_, 1.0, 1e-6);          // Speed should remain 1 m/s
     
-    // Get the ENU state and verify correct
+    // Output the ENU state and verify correct
     auto enu_state = localizer->StateENU();
+    std::cout << "State (ENU) with 0-degree heading and +30-degree steering after 1 second:" << std::endl;
+    std::cout << "Position: [" << enu_state.pos_[0] << ", " << enu_state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << enu_state.psi_ << " rad" << std::endl;
+    std::cout << "Steering angle: " << enu_state.delta_ << " rad" << std::endl;
     
     // In ENU, the conversion is:
     // x_enu = x_ned
@@ -372,8 +414,12 @@ TEST_F(ShortTermLocalizationTest, DrivingWithZeroHeadingAndNegative30DegreeSteer
     // Update front axle position after 1 second
     localizer->UpdateFrontAxlePosition(1.0);
     
-    // Get the state and verify correct
+    // Output the state and verify correct
     auto state = localizer->State();
+    std::cout << "State (NED) with 0-degree heading and -30-degree steering after 1 second:" << std::endl;
+    std::cout << "Position: [" << state.pos_[0] << ", " << state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << state.psi_ << " rad" << std::endl;
+    std::cout << "Steering angle: " << state.delta_ << " rad" << std::endl;
     
     // With 0-degree heading and -30-degree steering, after 1 second at 1 m/s,
     // we expect position to change as if the vehicle was heading at -30 degrees
@@ -392,8 +438,12 @@ TEST_F(ShortTermLocalizationTest, DrivingWithZeroHeadingAndNegative30DegreeSteer
     EXPECT_NEAR(state.delta_, steering_angle, 1e-6); // Steering angle should remain -PI/6
     EXPECT_NEAR(state.speed_, 1.0, 1e-6);          // Speed should remain 1 m/s
     
-    // Get the ENU state and verify correct
+    // Output the ENU state and verify correct
     auto enu_state = localizer->StateENU();
+    std::cout << "State (ENU) with 0-degree heading and -30-degree steering after 1 second:" << std::endl;
+    std::cout << "Position: [" << enu_state.pos_[0] << ", " << enu_state.pos_[1] << "]" << std::endl;
+    std::cout << "Heading: " << enu_state.psi_ << " rad" << std::endl;
+    std::cout << "Steering angle: " << enu_state.delta_ << " rad" << std::endl;
     
     // In ENU, the conversion is:
     // x_enu = x_ned
@@ -404,4 +454,38 @@ TEST_F(ShortTermLocalizationTest, DrivingWithZeroHeadingAndNegative30DegreeSteer
     EXPECT_NEAR(enu_state.psi_, -expected_heading, 1e-6);   // Heading in ENU (negated)
     EXPECT_NEAR(enu_state.delta_, steering_angle, 1e-6);    // Steering angle should remain the same
     EXPECT_NEAR(enu_state.speed_, 1.0, 1e-6);               // Speed should remain 1 m/s
+}
+
+// Test rear wheels speed averaging
+TEST_F(ShortTermLocalizationTest, RearWheelsSpeedAveraging) {
+    // Create a ShortTermLocalization object for this test with rear_average speed mode
+    // Parameters: heading mode, speed mode, wheelbase
+    auto localizer = std::make_unique<ShortTermLocalization>("IMU", "rear_average", 2.8);
+    
+    // Set initial heading to 0 radians (north in NED)
+    localizer->UpdateHeading(0.0);
+    
+    // Update rear wheel speeds with different values
+    localizer->UpdateRearRightSpeed(1.0);
+    localizer->UpdateRearLeftSpeed(3.0);
+    
+    // Create initial state and set the initial time
+    LocState initial_state;
+    initial_state.pos_ = {0.0, 0.0};
+    initial_state.psi_ = 0.0;
+    initial_state.delta_ = 0.0;
+    initial_state.speed_ = 0.0; // Will be updated by wheel speeds
+    localizer->ResetVehicleState(0.0, initial_state);
+    
+    // Get the current state
+    auto state = localizer->State();
+    std::cout << "State after updating rear wheels with different speeds:" << std::endl;
+    std::cout << "Speed: " << state.speed_ << " m/s" << std::endl;
+    
+    // Verify that the speed is the average of the rear wheel speeds
+    EXPECT_NEAR(state.speed_, 2.0, 1e-6);  // Average of 1.0 and 3.0
+    
+    // Get the ENU state and verify as well
+    auto enu_state = localizer->StateENU();
+    EXPECT_NEAR(enu_state.speed_, 2.0, 1e-6);  // Average should be the same in ENU
 }

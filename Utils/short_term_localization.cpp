@@ -16,11 +16,6 @@ ShortTermLocalization::ShortTermLocalization(
     : vehicle_heading_estimation_mode_(heading_update_mode),
     vehicle_speed_estimation_mode_(vehicle_speed_estimation_mode),
     vehicle_wheelbase_(vehicle_wheelbase) {
-    std::cout << "short term localization created" << '\n';
-    std::cout << " heading estimation mode is " <<
-        vehicle_heading_estimation_mode_<< "\n";
-    std::cout << "speed estimation mode is " <<
-        vehicle_speed_estimation_mode_<< "\n";
 }
 
 LocState ShortTermLocalization::State() const {
