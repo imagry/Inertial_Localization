@@ -26,16 +26,16 @@ flowchart TD
     SensorInputs --> |Steering wheel angle| AHRSHandler
     SensorInputs --> |External heading| AHRSHandler
     
-    AHRSHandler["AHRSLocHandler\nMain Localization Coordinator"]
+    AHRSHandler["AHRSLocHandler Main Localization Coordinator"]
     
-    AHRSHandler --> AHRS["AttitudeEstimator\nOrientation & Heading"]
-    AHRSHandler --> SpeedEst["SpeedEstimator\nVelocity Calculation"]
-    AHRSHandler --> ShortTerm["ShortTermLocalization\nPosition Tracking"]
+    AHRSHandler --> AHRS["AttitudeEstimator Orientation & Heading"]
+    AHRSHandler --> SpeedEst["SpeedEstimator Velocity Calculation"]
+    AHRSHandler --> ShortTerm["ShortTermLocalization Position Tracking"]
     
     AHRS --> ShortTerm
     SpeedEst --> ShortTerm
     
-    ShortTerm --> DebugStates["LocalizationDebugStates\nLogging & Monitoring"]
+    ShortTerm --> DebugStates["LocalizationDebugStates Logging & Monitoring"]
     
     AHRSHandler --> Output["Output Interface"]
     Output --> |Position| Client
@@ -169,6 +169,16 @@ heading = loc_handler.GetVehicleHeading()
 ## 5. Offline Calculation Test Script
 
 The `carpose_offline_calculation.py` script demonstrates how to use the Python binding for processing sensor data from an AI-driver trip.
+
+# python environment
+Install venv:
+cd Tests/python
+sudo apt-get install python3-venv
+python3 -m venv vehicle_control_env
+source vehicle_control_env/bin/activate
+pip install -r requirements.txt 
+# to install tkiner 
+sudo apt-get install python3-tk
 
 ### 5.1 Overview
 - **Location**: `Tests/python/python_binding/carpose_offline_calculation.py`
