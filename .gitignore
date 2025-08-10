@@ -28,7 +28,6 @@ cmake-bin/
 
 # Ignore specific files in Tests/python/python_binding
 Tests/python/python_binding/CMakeFiles/**/*
-Tests/python/python_binding/CMakeLists.txt
 Tests/python/python_binding/**/*.cmake
 Tests/python/python_binding/**/*.bin
 Tests/python/python_binding/**/*.exe
