@@ -2,11 +2,11 @@
 .git
 3rdParty/
 build/
-Tests/python/.idea
-Tests/python/__pycache__
-Tests/python/**/__pycache__
-Tests/python/python_binding/CMakeCache.txt
-Tests/python/python_binding/CMakeFiles/
+test_package/python/.idea
+test_package/python/__pycache__
+test_package/python/**/__pycache__
+test_package/python/python_binding/CMakeCache.txt
+test_package/python/python_binding/CMakeFiles/
 data/temp_results/
 data/reference_paths/
 old_and_unused_code/
@@ -14,22 +14,10 @@ old_and_unused_code/
 cmake-bin/
 .vscode/
 
-# CMake generated files
-**/CMakeFiles/
-**/CMakeCache.txt
-**/*.cmake
-**/Makefile
-**/compile_commands.json
-**/*.a
-**/*.o
-**/*.exe
-**/*.bin
-**/*.out
-
 # Ignore specific files in Tests/python/python_binding
-Tests/python/python_binding/CMakeFiles/**/*
-Tests/python/python_binding/**/*.cmake
-Tests/python/python_binding/**/*.bin
-Tests/python/python_binding/**/*.exe
-Tests/python/python_binding/CMakeFiles/
-Tests/python/python_binding/CMakeFiles/3.28.1/
+test_package/python/python_binding/CMakeFiles/**/*
+test_package/python/python_binding/**/*.cmake
+test_package/python/python_binding/**/*.bin
+test_package/python/python_binding/**/*.exe
+test_package/python/python_binding/CMakeFiles/
+test_package/python/python_binding/CMakeFiles/3.28.1/

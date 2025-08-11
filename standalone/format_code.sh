@@ -1,0 +1,1 @@
+find ./src/ ./test_package/ -iname "*.h" -or -iname "*.cpp" | grep -v .pb. | xargs clang-format -i
