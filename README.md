@@ -26,7 +26,7 @@ flowchart TD
     SensorInputs --> |Steering wheel angle| AHRSHandler
     SensorInputs --> |External heading| AHRSHandler
     
-    AHRSHandler["AHRSLocHandler Main Localization Coordinator"]
+    AHRSHandler["AhrsLocHandler Main Localization Coordinator"]
     
     AHRSHandler --> AHRS["AttitudeEstimator Orientation & Heading"]
     AHRSHandler --> SpeedEst["SpeedEstimator Velocity Calculation"]
@@ -60,13 +60,13 @@ flowchart TD
   - Vehicle heading (orientation)
   - Vehicle velocity
 - **Key Methods**:
-  - `UpdateIMU()`: Process new IMU data
+  - `UpdateImu()`: Process new IMU data
   - `UpdateRearRightSpeed()`/`UpdateRearLeftSpeed()`: Process wheel odometry
   - `UpdateSteeringWheel()`: Update steering angle
   - `GetPosition()`: Retrieve current position
   - `GetVehicleHeading()`: Retrieve current heading
 
-### 3.2 Attitude and Heading Reference System (`Utils/AHRS.cpp/hpp`)
+### 3.2 Attitude and Heading Reference System (`utils/ahrs.cpp/hpp`)
 - **Function**: Determines vehicle orientation and heading
 - **Input**:
   - Gyroscope data (angular velocity)
@@ -75,11 +75,11 @@ flowchart TD
   - Vehicle orientation (quaternion)
   - Heading information
 - **Key Methods**:
-  - `UpdateIMU()`: Process IMU measurements
+  - `UpdateImu()`: Process IMU measurements
   - `GetAttitude()`: Retrieve current attitude
   - `GetHeading()`: Retrieve current heading
 
-### 3.3 Short-Term Localization (`Utils/short_term_localization.cpp/hpp`)
+### 3.3 Short-Term Localization (`utils/short_term_localization.cpp/hpp`)
 - **Function**: Handles vehicle position tracking and velocity estimation
 - **Input**:
   - Heading information from AHRS
@@ -93,7 +93,7 @@ flowchart TD
   - `UpdateHeading()`: Update vehicle heading
   - `State()`: Retrieve current localization state
 
-### 3.4 Speed Estimator (`Utils/SpeedEstimators.cpp/hpp`)
+### 3.4 Speed Estimator (`utils/speed_estimators.cpp/hpp`)
 - **Function**: Fuses sensor data to estimate vehicle speed
 - **Input**:
   - IMU acceleration data
@@ -101,11 +101,11 @@ flowchart TD
 - **Output**:
   - Vehicle speed estimate
 - **Key Methods**:
-  - `UpdateIMU()`: Process new IMU data
+  - `UpdateImu()`: Process new IMU data
   - `UpdateRearSpeeds()`: Process wheel odometry data
   - `GetEstimatedSpeed()`: Retrieve current speed estimate
 
-### 3.5 Localization Debug States (`Utils/localization_debug_states.cpp/hpp`)
+### 3.5 Localization Debug States (`utils/localization_debug_states.cpp/hpp`)
 - **Function**: Provides debugging and logging capabilities
 - **Input**:
   - Localization state information
@@ -122,17 +122,17 @@ flowchart TD
 The Python binding layer provides a clean interface to access the C++ localization functionality from Python applications. It is implemented using pybind11.
 
 ### 4.1 Structure
-- **Location**: `Tests/python/python_binding/localization_pybind_module.cpp`
+- **Location**: `tests/python/python_binding/localization_pybind_module.cpp`
 - **Build System**: CMake with a dedicated build script
 - **Exposed Classes**:
-  - `AHRSLocHandler`: Main localization coordinator
+  - `AhrsLocHandler`: Main localization coordinator
   - `ImuSample`: Structure for IMU measurements
   - `Vec3d`: Vector for 3D data (acceleration, gyroscope)
 
 ### 4.2 Key Bound Methods
-- **AHRSLocHandler Constructor**: Takes paths to configuration JSON files
+- **AhrsLocHandler Constructor**: Takes paths to configuration JSON files
 - **Sensor Update Methods**:
-  - `UpdateIMU(imu_sample, timestamp)`: Process IMU data
+  - `UpdateImu(imu_sample, timestamp)`: Process IMU data
   - `UpdateRearRightSpeed(speed, timestamp)`: Update right wheel speed
   - `UpdateRearLeftSpeed(speed, timestamp)`: Update left wheel speed
   - `UpdateSteeringWheel(angle, timestamp)`: Update steering angle
@@ -146,7 +146,7 @@ The Python binding layer provides a clean interface to access the C++ localizati
 import localization_pybind_module as lm
 
 # Create localization handler with config files
-loc_handler = lm.AHRSLocHandler("vehicle_config.json", "localization_config.json")
+loc_handler = lm.AhrsLocHandler("vehicle_config.json", "localization_config.json")
 
 # Create IMU sample
 imu_sample = lm.ImuSample()
@@ -156,7 +156,7 @@ imu_sample.acc_.y = 0.0  # Lateral acceleration
 imu_sample.acc_.z = 9.8  # Vertical acceleration
 
 # Update localization with sensor data
-loc_handler.UpdateIMU(imu_sample, timestamp)
+loc_handler.UpdateImu(imu_sample, timestamp)
 loc_handler.UpdateRearRightSpeed(5.0, timestamp)
 loc_handler.UpdateRearLeftSpeed(5.0, timestamp)
 loc_handler.UpdateSteeringWheel(0.1, timestamp)
@@ -172,7 +172,7 @@ The `carpose_offline_calculation.py` script demonstrates how to use the Python b
 
 # python environment
 Install venv:
-cd Tests/python
+cd tests/python
 sudo apt-get install python3-venv
 python3 -m venv vehicle_control_env
 source vehicle_control_env/bin/activate
@@ -181,13 +181,13 @@ pip install -r requirements.txt
 sudo apt-get install python3-tk
 
 ### 5.1 Overview
-- **Location**: `Tests/python/python_binding/carpose_offline_calculation.py`
+- **Location**: `tests/python/python_binding/carpose_offline_calculation.py`
 - **Purpose**: Process pre-recorded sensor data to calculate vehicle trajectory
 - **Input**: Trip directory containing recorded sensor data
 - **Output**: Calculated vehicle trajectory and visualization
 
 ### 5.2 Key Features
-- **Data Loading**: Uses `Classes.Trip` to load and organize sensor data
+- **Data Loading**: Uses `classes.Trip` to load and organize sensor data
 - **Chronological Processing**: Sorts all sensor readings by timestamp
 - **Sensor Fusion**: Processes IMU, wheel speed, and steering data in sequence
 - **Trajectory Comparison**: Compares calculated trajectory with reference data
@@ -219,7 +219,7 @@ The Inertial Localization system implements a comprehensive suite of unit tests 
 ### 6.1 Test Suite Overview
 
 #### 6.1.1 AttitudeEstimator Tests
-- **File**: `Tests/test_AHRS.cpp`
+- **File**: `tests/test_ahrs.cpp`
 - **Test Cases**:
   - **GyroPromotion Tests**: Verify correct rotation matrix updates along each axis
     - X-axis rotation: Confirms Euler angles [1.0,0,0] rad after applying rotation
@@ -231,14 +231,14 @@ The Inertial Localization system implements a comprehensive suite of unit tests 
     - Verifies gravity vector alignment in body and navigation frames
 
 #### 6.1.2 ShortTermLocalization Tests
-- **File**: `Tests/test_short_term_localization.cpp`
+- **File**: `tests/test_short_term_localization.cpp`
 - **Test Cases**:
   - **Straight Line Driving**: Tests position updates when driving at constant speed with different headings
   - **Steering Tests**: Verifies position and heading changes with steering inputs
   - **Speed Estimation**: Tests speed calculations from wheel odometry
 
-#### 6.1.3 AHRSLocHandler Tests
-- **File**: `Tests/test_ahrs_loc_handler.cpp`
+#### 6.1.3 AhrsLocHandler Tests
+- **File**: `tests/test_ahrs_loc_handler.cpp`
 - **Test Cases**:
   - **InitializationFromDefaultFiles**: Verifies handler initialization with configuration files
     - Checks initial position is at origin
@@ -272,16 +272,16 @@ You can run all tests or specific test cases:
 
 ```bash
 # Run all tests
-./Tests/run_tests
+./tests/run_tests
 
 # Run a specific test suite
-./Tests/run_tests --gtest_filter=AHRSLocHandlerTest.*
+./tests/run_tests --gtest_filter=AHRSLocHandlerTest.*
 
 # Run a specific test case
-./Tests/run_tests --gtest_filter=AHRSLocHandlerTest.RearWheelSpeedUpdates
+./tests/run_tests --gtest_filter=AHRSLocHandlerTest.RearWheelSpeedUpdates
 
 # Run tests with detailed output
-./Tests/run_tests --gtest_output=xml:test_results.xml
+./tests/run_tests --gtest_output=xml:test_results.xml
 ```
 
 ### 6.4 Test Output
@@ -297,7 +297,7 @@ The tests provide detailed output including:
 The `test_localization.sh` script provides a comprehensive regression test for the localization functionality.
 
 ### 7.1 Overview
-- **Location**: `/home/eranvertz/git/Inertial_Localization/Tests/test_localization.sh`
+- **Location**: `/home/eranvertz/git/Inertial_Localization/tests/test_localization.sh`
 - **Purpose**: Verify localization algorithm works correctly after code changes
 - **Operation**: Runs the offline calculation script and compares results with expected values
 
@@ -316,7 +316,7 @@ The `test_localization.sh` script provides a comprehensive regression test for t
 
 ### 7.4 Command Line Usage
 ```bash
-./Tests/test_localization.sh [--update-expected] [--trip-path PATH]
+./tests/test_localization.sh [--update-expected] [--trip-path PATH]
 ```
 
 

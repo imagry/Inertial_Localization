@@ -1,12 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(InertialLocalization)
-include_directories(${CMAKE_SOURCE_DIR})
 
 # specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
-
-# Add the directory with the Eigen library to Utils
-# include_directories(${CMAKE_SOURCE_DIR}/3rdParty/eigen)
 
 include(FetchContent)
 
@@ -17,7 +13,11 @@ FetchContent_Declare(
   GIT_TAG 3.4.0
 )
 
-FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_Declare(
+    jsoncpp
+    GIT_REPOSITORY https://github.com/open-source-parsers/jsoncpp.git
+    GIT_TAG 1.9.5
+)
 
 # Add Google Test
 FetchContent_Declare(
@@ -27,23 +27,21 @@ FetchContent_Declare(
 )
 
 # Make all dependencies available
-FetchContent_MakeAvailable(eigen json googletest)
+FetchContent_MakeAvailable(eigen jsoncpp googletest)
 
 # Add Eigen include path
 include_directories(${eigen_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/src)
+include_directories(${jsoncpp_SOURCE_DIR}/include)
+
 
 # For Windows: Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(json googletest)
 
-add_subdirectory(Utils)
-add_subdirectory(Tests)
-add_subdirectory(wrapper)
+file(GLOB_RECURSE SOURCES "src/**.cpp" "src/**.h")
 
-add_library(LocalizationAPI
-    ahrs_loc_handler.cpp
-)
-target_link_libraries(LocalizationAPI PUBLIC Utils nlohmann_json::nlohmann_json)
-add_executable(InertialLocalization Main.cpp)
-# Remove the Tests library from the link list to avoid dependency on the broken Tests
-target_link_libraries(InertialLocalization PUBLIC Utils LocalizationAPI)
+add_library(inertial_localization_api SHARED ${SOURCES})
+
+target_link_libraries(inertial_localization_api PUBLIC jsoncpp_lib)
+
+add_subdirectory(test_package)
