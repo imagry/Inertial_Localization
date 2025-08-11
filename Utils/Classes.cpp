@@ -55,6 +55,14 @@ std::tuple<int, double> BufferAny::ClosestValue(double target) {
 int BufferAny::Size() {
     return values_.size();
 }
+std::vector<double> BufferAny::GetBufferValues() {
+    std::vector<double> vec;
+    vec.reserve(values_.size());
+    for (const auto& val : values_) {
+        vec.push_back(std::any_cast<double>(val));
+    }
+    return vec;
+}
 DelayAny::DelayAny(PreciseSeconds max_time_delay,
           PreciseSeconds nominal_dt,
           std::any default_value):
@@ -138,6 +146,7 @@ void DelayAny::Test() {
     std::cout << system_cmd << "\n";
     system(system_cmd.c_str());
 }
+
 SecondOrderLPF::SecondOrderLPF(
     PreciseSeconds clock, double freq_cutoff, double dumping_ratio,
     double initial_value, double initial_derivative, double max_dt,

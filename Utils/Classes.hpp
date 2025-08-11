@@ -83,6 +83,13 @@ struct BufferAny {
      * @return int Number of values currently stored
      */
     int Size();
+
+    /**
+     * @brief Gets all values from the buffer as a vector of doubles.
+     * 
+     * @return std::vector<double> Vector containing all buffer values.
+     */
+    std::vector<double> GetBufferValues();
 };
 
 /**

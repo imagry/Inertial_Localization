@@ -16,6 +16,7 @@ set(GTEST_SOURCES
     test_gtest_sample.cpp
     test_AHRS.cpp
     test_short_term_localization.cpp
+    test_static_dynamic_test.cpp
     # Temporarily comment out these files until we fix the issues
     # test_attitude_estimator.cpp
     test_ahrs_loc_handler.cpp

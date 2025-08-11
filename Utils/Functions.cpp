@@ -325,3 +325,17 @@ std::vector<double> Norm_nX2_array(const std::vector<std::vector<double>>& nX2_a
     }
     return arr_norm;
 }
+
+double VectorNorm3D(const Vec3d& vec) {
+    return sqrt(pow(vec.x, 2) + pow(vec.y, 2) + pow(vec.z, 2));
+}
+
+double StandardDeviation(const std::vector<double>& vec) {
+    if (vec.size() < 2) {
+        return 0.0;
+    }
+    Eigen::VectorXd eigen_vec = ConvertVectorToEigen(vec);
+    double mean = eigen_vec.mean();
+    double sq_sum = (eigen_vec.array() - mean).square().sum();
+    return std::sqrt(sq_sum / (eigen_vec.size() - 1));
+}

@@ -117,6 +117,18 @@ flowchart TD
   - `SaveLocData()`: Save localization data to file
   - `CreateDirectories()`: Create necessary directories for logs
 
+### 3.6 Static/Dynamic State Detector (`Utils/StaticDynamicTest.cpp/hpp`)
+- **Function**: Determines if the vehicle is stationary or in motion
+- **Input**:
+  - IMU measurements (accelerometer and gyroscope)
+  - Car speed
+- **Output**:
+  - A state: `STATIC`, `DYNAMIC`, or `NOT_INITIALIZED`
+- **Key Methods**:
+  - `UpdateIMU()`: Process new IMU data
+  - `UpdateCarSpeed()`: Process car speed data
+  - `GetState()`: Retrieve the current motion state
+
 ## 4. Python Binding Model
 
 The Python binding layer provides a clean interface to access the C++ localization functionality from Python applications. It is implemented using pybind11.
@@ -249,6 +261,15 @@ The Inertial Localization system implements a comprehensive suite of unit tests 
     - Configures handler to use "rear_average" speed estimation mode
     - Sets different speeds for left (5.2 m/s) and right (4.8 m/s) wheels
     - Confirms internal state speed is set to the average (5.0 m/s)
+
+#### 6.1.4 StaticDynamicTest Tests
+- **File**: `Tests/test_static_dynamic_test.cpp`
+- **Test Cases**:
+  - **Initialization**: Verifies the class initializes to the `NOT_INITIALIZED` state.
+  - **StateNotInitializedUntilBuffersAreFull**: Ensures the state does not change until all data buffers are full.
+  - **TransitionToStatic**: Confirms the state correctly transitions to `STATIC` when provided with low-variance sensor data.
+  - **TransitionToDynamic**: A set of tests to verify the state correctly transitions to `DYNAMIC` when any of the individual sensor inputs (accelerometer, gyroscope, car speed mean, car speed max) exceed their configured thresholds.
+  - **State Transitions**: Verifies correct state changes from `STATIC` to `DYNAMIC` and back to `STATIC` based on the input data stream.
 
 ### 6.2 Building the Tests
 
