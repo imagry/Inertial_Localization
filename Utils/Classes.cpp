@@ -55,6 +55,9 @@ std::tuple<int, double> BufferAny::ClosestValue(double target) {
 int BufferAny::Size() {
     return values_.size();
 }
+void BufferAny::ResetBuffer() {
+    values_.clear();
+}
 std::vector<double> BufferAny::GetBufferValues() {
     std::vector<double> vec;
     vec.reserve(values_.size());

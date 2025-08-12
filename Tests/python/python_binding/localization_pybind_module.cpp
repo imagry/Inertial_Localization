@@ -53,5 +53,9 @@ PYBIND11_MODULE(localization_pybind_module, m) {
         .def("GetStaticDynamicTestState", [](const AHRSLocHandler& self){
             return static_cast<int>(self.GetStaticDynamicTestState());
         })
-        .def("GetStaticDynamicTestSensorsFeatures", &AHRSLocHandler::GetStaticDynamicTestSensorsFeatures);
+        .def("GetStaticDynamicTestSensorsFeatures", &AHRSLocHandler::GetStaticDynamicTestSensorsFeatures)
+        .def("GetGyroBiases", [](const AHRSLocHandler& self){
+            Vec3d b = self.GetGyroBiases();
+            return pybind11::make_tuple(b.x, b.y, b.z);
+        });
 }

@@ -154,6 +154,23 @@ The Python binding layer provides a clean interface to access the C++ localizati
   - `GetVehicleHeading()`: Get current vehicle heading
   - `GetStaticDynamicTestState()`: Get Static/Dynamic state (0: NOT_INITIALIZED, 1: STATIC, 2: DYNAMIC)
   - `GetStaticDynamicTestSensorsFeatures()`: Get tuple `(acc_std, gyro_std, speed_mean, speed_max)`
+  - `GetGyroBiases()`: Get tuple `(bias_x, bias_y, bias_z)` representing current estimated gyro biases
+
+### 4.5 Gyro Bias Estimation
+- **Component**: `Utils/GyroBiasStaticEstimator.hpp`
+- **Purpose**: Estimate gyroscope biases during static periods.
+- **Inputs**:
+  - Gyro samples (rad/s) per axis
+  - IMU timestamps (seconds)
+  - Config parameters: `gyro_bias_estimation_buffer_size`, `nominal_IMU_freq`
+- **Operation**:
+  - Buffers gyro readings per axis with size `gyro_bias_estimation_buffer_size`.
+  - If time between samples exceeds `10 * (1 / nominal_IMU_freq)`, buffers are reset.
+  - When buffers are full and SD test reports `STATIC`, compute per-axis means to set biases.
+- **Usage via Python**:
+  - `GetGyroBiases()` returns current biases as `(bx, by, bz)`.
+- **Visualization**:
+  - Use `Tests/python/python_binding/gyro_bias_estimation_visualization.py` to plot gyro axes, SD features/thresholds, state, and per-axis biases over time.
 
 ### 4.3 Usage Example
 ```python
@@ -234,7 +251,7 @@ sudo apt-get install python3-tk
 - **Sensor Fusion**: Processes IMU, wheel speed, and steering data in sequence
 - **Trajectory Comparison**: Compares calculated trajectory with reference data
 - **Visualization**: Optional plot of calculated vs. reference trajectory
-- **Static/Dynamic Visualization**: See `Tests/python/python_binding/static_dynamic_test_visualization.py` to visualize accelerometer, gyroscope, wheel speeds, SD features and thresholds, and SD state over time.
+- **Static/Dynamic Visualization**: See `Tests/python/python_binding/gyro_bias_estimation_visualization.py` to visualize accelerometer, gyroscope, wheel speeds, SD features and thresholds, SD state, and gyro biases over time.
 
 ### 5.3 Workflow
 1. Load trip data from specified directory

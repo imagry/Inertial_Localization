@@ -85,9 +85,12 @@ struct BufferAny {
     int Size();
 
     /**
-     * @brief Gets all values from the buffer as a vector of doubles.
-     * 
-     * @return std::vector<double> Vector containing all buffer values.
+     * @brief Flush all values from the buffer (size becomes zero).
+     */
+    void ResetBuffer();
+
+    /**
+     * @brief Return all values as vector<double> (for buffers of doubles).
      */
     std::vector<double> GetBufferValues();
 };

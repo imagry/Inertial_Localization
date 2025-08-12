@@ -19,6 +19,7 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include "Utils/short_term_localization.hpp"
 #include "Utils/SpeedEstimators.hpp"
 #include "Utils/StaticDynamicTest.hpp"
+#include "Utils/GyroBiasStaticEstimator.hpp"
 using json = nlohmann::json;
 
 class AHRSLocHandler {
@@ -52,6 +53,7 @@ class AHRSLocHandler {
     StaticDynamicTest::State GetStaticDynamicTestState() const { return static_dynamic_test_obj_.GetState(); }
     std::tuple<double, double, double, double> GetStaticDynamicTestSensorsFeatures() const { return static_dynamic_test_obj_.GetSensorsFeatures(); }
 
+    Vec3d GetGyroBiases() const { return gyro_bias_static_estimator_.GetBiases(); }
 
  private:
     json vehicle_config_;
@@ -66,6 +68,7 @@ class AHRSLocHandler {
     LocalizationDebugStates debug_obj_;
 
     StaticDynamicTest static_dynamic_test_obj_;
+    GyroBiasStaticEstimator gyro_bias_static_estimator_;
     
     // Helper method to initialize the appropriate speed estimator
     void InitializeSpeedEstimator();

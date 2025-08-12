@@ -47,7 +47,8 @@ AHRSLocHandler::AHRSLocHandler(const json& vehicle_config,
       debug_mode_(localization_config_["debug_mode"]),
       debug_obj_(localization_config_["debug_mode"],
                  localization_config_["control_modul_dir"]),
-      static_dynamic_test_obj_(localization_config_)
+      static_dynamic_test_obj_(localization_config_),
+      gyro_bias_static_estimator_(localization_config_)
 {
     InitializeSpeedEstimator();
 }
@@ -66,7 +67,8 @@ AHRSLocHandler::AHRSLocHandler(const std::string& vehicle_config_path,
       debug_mode_(localization_config_["debug_mode"]),
       debug_obj_(localization_config_["debug_mode"],
                  localization_config_["control_modul_dir"]),
-      static_dynamic_test_obj_(localization_config_)
+      static_dynamic_test_obj_(localization_config_),
+      gyro_bias_static_estimator_(localization_config_)
 {
     InitializeSpeedEstimator();
 }
@@ -92,6 +94,11 @@ void AHRSLocHandler::UpdateIMU(const ImuSample& sample, PreciseSeconds clock) {
 
     // Update static/dynamic test with IMU sample
     static_dynamic_test_obj_.UpdateIMU(sample);
+
+    // Feed gyro biases estimator only when static
+    if (static_dynamic_test_obj_.GetState() == StaticDynamicTest::STATIC) {
+        gyro_bias_static_estimator_.GyroUpdate(sample.gyro_, sample.time_stamp);
+    }
 
     if (localization_config_["vehicle_heading_estimation_mode"] == "IMU") {
         vector<double> euler = Rot_mat2euler(AHRS_obj_.Rnb_);

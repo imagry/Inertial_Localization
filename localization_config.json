@@ -19,5 +19,6 @@
     "SD_test_carspeed_max_th": 1e-3,
     "SD_test_acc_buffer_size": 100,
     "SD_test_gyro_buffer_size": 100,
-    "SD_test_carspeed_buffer_size": 100
+    "SD_test_carspeed_buffer_size": 100,
+    "gyro_bias_estimation_buffer_size": 500
 }

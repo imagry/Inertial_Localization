@@ -90,3 +90,27 @@ A comprehensive test suite was developed for the `StaticDynamicTest` class using
   - Rebuilt C++ and test targets — all tests green.
   - Rebuilt pybind module via `Tests/python/python_binding/rebuild.sh`.
   - Verified visualization script and output image generation.
+
+---
+
+## 6. Consolidated Notes: Gyro Bias Estimation and Visualization
+
+- Gyro Bias Static Estimation (`Utils/GyroBiasStaticEstimator.hpp`):
+  - Inputs: gyro samples (rad/s), timestamps, `gyro_bias_estimation_buffer_size`, `nominal_IMU_freq`.
+  - Logic: maintain per-axis buffers; reset if gap > `10 * (1 / nominal_IMU_freq)`; when buffers full and SD state is STATIC, set biases to per-axis means.
+  - Getter: `GetBiases()` returns `(bx, by, bz)` as `Vec3d`.
+
+- `AHRSLocHandler` integration:
+  - Members: `static_dynamic_test_obj_`, `gyro_bias_static_estimator_`.
+  - `UpdateIMU`: updates SD test; only when SD state is STATIC, calls `gyro_bias_static_estimator_.GyroUpdate(sample.gyro_, sample.time_stamp)`.
+  - Exposed getters: `GetStaticDynamicTestState()`, `GetStaticDynamicTestSensorsFeatures()`, `GetGyroBiases()`.
+
+- Pybind exports (`Tests/python/python_binding/localization_pybind_module.cpp`):
+  - `GetStaticDynamicTestState()` → int {0,1,2}.
+  - `GetStaticDynamicTestSensorsFeatures()` → tuple `(acc_std, gyro_std, speed_mean, speed_max)`.
+  - `GetGyroBiases()` → tuple `(bias_x, bias_y, bias_z)`.
+
+- Visualization (`Tests/python/python_binding/gyro_bias_estimation_visualization.py`):
+  - Left column (4 plots): accelerometer (acc_std + threshold), gyroscope (gyro_std + threshold), rear wheel speeds (mean/max + thresholds), SD state.
+  - Right column (3 plots): per-axis gyro and estimated bias (X/Y/Z).
+  - Output: `results/gyro_bias_estimation_visualization.png`.
