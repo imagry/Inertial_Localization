@@ -57,3 +57,36 @@ A comprehensive test suite was developed for the `StaticDynamicTest` class using
 3.  The issue was resolved by removing an unnecessary `#include "Classes.hpp"` from `Utils/Sensors.hpp`, which broke the dependency cycle.
 
 4.  After fixing the build, all 28 unit tests in the project, including the 9 new tests for `StaticDynamicTest`, were run and passed successfully. This was achieved by executing the test runner from the `cmake-bin` directory, as specified in the `README.md`, which resolved pre-existing path issues in other test suites.
+
+---
+
+## 5. Subsequent Enhancements and Integration (Current Progress)
+
+- **Configuration Buffer Sizes**:
+  - Added buffer size fields to `localization_config.json`: `SD_test_acc_buffer_size`, `SD_test_gyro_buffer_size`, `SD_test_carspeed_buffer_size`.
+  - Added an overload `StaticDynamicTest(const nlohmann::json&)` that reads sizes and thresholds directly from the config.
+
+- **Feature Tracking**:
+  - `StaticDynamicTest` now exposes and updates feature members: `acc_std_`, `gyro_std_`, `speed_mean_`, `speed_max_`.
+  - Added `GetSensorsFeatures()` returning a tuple `(acc_std_, gyro_std_, speed_mean_, speed_max_)`.
+
+- **AHRSLocHandler Integration**:
+  - Added member `static_dynamic_test_obj_` to `AHRSLocHandler`.
+  - Initialized from `localization_config_` in both constructors.
+  - Hooked `UpdateIMU` and `UpdateSpeed` to call `UpdateIMU` / `UpdateCarSpeed` on the SD test.
+  - Added getters: `GetStaticDynamicTestState()` and `GetStaticDynamicTestSensorsFeatures()`.
+
+- **Pybind Exposure**:
+  - Exposed both getters via `localization_pybind_module`:
+    - `GetStaticDynamicTestState()` → int {0,1,2}
+    - `GetStaticDynamicTestSensorsFeatures()` → Python tuple `(acc_std, gyro_std, speed_mean, speed_max)`
+
+- **Visualization Script**:
+  - Added `Tests/python/python_binding/static_dynamic_test_visualization.py`.
+  - Loads data via `Classes.Trip`, streams into the pybind handler, and records signals and features.
+  - Plots 4 subplots (acc, gyro, wheel speeds + features, state) with thresholds overlaid from `localization_config.json`.
+
+- **Build/Run**:
+  - Rebuilt C++ and test targets — all tests green.
+  - Rebuilt pybind module via `Tests/python/python_binding/rebuild.sh`.
+  - Verified visualization script and output image generation.

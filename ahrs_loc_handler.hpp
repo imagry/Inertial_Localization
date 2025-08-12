@@ -18,13 +18,14 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 */
 #include "Utils/short_term_localization.hpp"
 #include "Utils/SpeedEstimators.hpp"
+#include "Utils/StaticDynamicTest.hpp"
 using json = nlohmann::json;
 
 class AHRSLocHandler {
     public:
     AHRSLocHandler(const json& vehicle_config, const json& localization_config);
     AHRSLocHandler(const std::string& vehicle_config_path = "vehicle_config.json",
-                        const std::string& control_config_path = "localization_config.json");
+                        const std::string& localization_config_path = "localization_config.json");
     const ShortTermLocalization& GetLoc() const { return localization_obj_; }
     bool UpdatePosition(PreciseSeconds clock);
     void UpdateIMU(const ImuSample& sample, PreciseSeconds clock);
@@ -47,9 +48,12 @@ class AHRSLocHandler {
     std::vector<PreciseMeters> GetPosition() const;
     PreciseRadians GetVehicleHeading() const;
     std::string GetVehicleHeadingEstimationMode() const;
-    
 
-private:
+    StaticDynamicTest::State GetStaticDynamicTestState() const { return static_dynamic_test_obj_.GetState(); }
+    std::tuple<double, double, double, double> GetStaticDynamicTestSensorsFeatures() const { return static_dynamic_test_obj_.GetSensorsFeatures(); }
+
+
+ private:
     json vehicle_config_;
     json localization_config_;
 
@@ -60,6 +64,8 @@ private:
     std::mutex UpdatePosition_lock_;
     bool debug_mode_;
     LocalizationDebugStates debug_obj_;
+
+    StaticDynamicTest static_dynamic_test_obj_;
     
     // Helper method to initialize the appropriate speed estimator
     void InitializeSpeedEstimator();

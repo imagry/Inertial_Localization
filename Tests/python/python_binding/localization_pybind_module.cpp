@@ -49,5 +49,9 @@ PYBIND11_MODULE(localization_pybind_module, m) {
         .def("UpdateHeading", &AHRSLocHandler::UpdateHeading)
         .def("UpdateVehicleState", &AHRSLocHandler::UpdateVehicleState)
         .def("GetPosition", &AHRSLocHandler::GetPosition)
-        .def("GetVehicleHeading", &AHRSLocHandler::GetVehicleHeading);
+        .def("GetVehicleHeading", &AHRSLocHandler::GetVehicleHeading)
+        .def("GetStaticDynamicTestState", [](const AHRSLocHandler& self){
+            return static_cast<int>(self.GetStaticDynamicTestState());
+        })
+        .def("GetStaticDynamicTestSensorsFeatures", &AHRSLocHandler::GetStaticDynamicTestSensorsFeatures);
 }

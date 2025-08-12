@@ -4,6 +4,7 @@
 #include "Sensors.hpp"
 #include <vector>
 #include <nlohmann/json.hpp>
+#include <tuple>
 
 class StaticDynamicTest {
 public:
@@ -14,10 +15,12 @@ public:
     };
 
     StaticDynamicTest(int acc_buffer_size, int gyro_buffer_size, int car_speed_buffer_size, const nlohmann::json& config);
+    StaticDynamicTest(const nlohmann::json& config);
 
     void UpdateIMU(const ImuSample& imu_sample);
     void UpdateCarSpeed(double car_speed);
     State GetState() const;
+    std::tuple<double, double, double, double> GetSensorsFeatures() const; // (acc_std_, gyro_std_, speed_mean_, speed_max_)
 
 private:
     void CalculateState();
@@ -35,4 +38,10 @@ private:
     double gyro_std_th_;
     double carspeed_mean_th_;
     double carspeed_max_th_;
+
+    // Tracked features
+    double acc_std_ = 0.0;
+    double gyro_std_ = 0.0;
+    double speed_mean_ = 0.0;
+    double speed_max_ = 0.0;
 };

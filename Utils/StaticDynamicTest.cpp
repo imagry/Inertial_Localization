@@ -23,6 +23,13 @@ StaticDynamicTest::StaticDynamicTest(int acc_buffer_size, int gyro_buffer_size, 
     carspeed_max_th_ = config["SD_test_carspeed_max_th"];
 }
 
+StaticDynamicTest::StaticDynamicTest(const nlohmann::json& config)
+    : StaticDynamicTest(
+        static_cast<int>(config["SD_test_acc_buffer_size"]),
+        static_cast<int>(config["SD_test_gyro_buffer_size"]),
+        static_cast<int>(config["SD_test_carspeed_buffer_size"]),
+        config) {}
+
 void StaticDynamicTest::UpdateIMU(const ImuSample& imu_sample) {
     acc_buffer_.Update(VectorNorm3D(imu_sample.acc_));
     gyro_buffer_.Update(VectorNorm3D(imu_sample.gyro_));
@@ -46,15 +53,15 @@ void StaticDynamicTest::CalculateState() {
     std::vector<double> gyro_vec = gyro_buffer_.GetBufferValues();
     std::vector<double> speed_vec = carspeed_buffer_.GetBufferValues();
 
-    double acc_std = StandardDeviation(acc_vec);
-    double gyro_std = StandardDeviation(gyro_vec);
-    double speed_mean = Mean(speed_vec);
-    double speed_max = *std::max_element(speed_vec.begin(), speed_vec.end());
+    acc_std_ = StandardDeviation(acc_vec);
+    gyro_std_ = StandardDeviation(gyro_vec);
+    speed_mean_ = Mean(speed_vec);
+    speed_max_ = *std::max_element(speed_vec.begin(), speed_vec.end());
 
-    if (acc_std < acc_std_th_ &&
-        gyro_std < gyro_std_th_ &&
-        speed_mean < carspeed_mean_th_ &&
-        speed_max < carspeed_max_th_) {
+    if (acc_std_ < acc_std_th_ &&
+        gyro_std_ < gyro_std_th_ &&
+        speed_mean_ < carspeed_mean_th_ &&
+        speed_max_ < carspeed_max_th_) {
         state_ = STATIC;
     } else {
         state_ = DYNAMIC;
@@ -63,4 +70,8 @@ void StaticDynamicTest::CalculateState() {
 
 StaticDynamicTest::State StaticDynamicTest::GetState() const {
     return state_;
+}
+
+std::tuple<double, double, double, double> StaticDynamicTest::GetSensorsFeatures() const {
+    return std::make_tuple(acc_std_, gyro_std_, speed_mean_, speed_max_);
 }

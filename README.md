@@ -152,6 +152,8 @@ The Python binding layer provides a clean interface to access the C++ localizati
 - **State Access Methods**:
   - `GetPosition()`: Get current position [x, y, z]
   - `GetVehicleHeading()`: Get current vehicle heading
+  - `GetStaticDynamicTestState()`: Get Static/Dynamic state (0: NOT_INITIALIZED, 1: STATIC, 2: DYNAMIC)
+  - `GetStaticDynamicTestSensorsFeatures()`: Get tuple `(acc_std, gyro_std, speed_mean, speed_max)`
 
 ### 4.3 Usage Example
 ```python
@@ -177,6 +179,34 @@ loc_handler.UpdateSteeringWheel(0.1, timestamp)
 position = loc_handler.GetPosition()
 heading = loc_handler.GetVehicleHeading()
 ```
+
+### 4.4 Environment and Build Instructions
+
+Follow these steps to build the Python module using pybind11.
+
+- Activate the virtual environment (created under `Tests/python/`):
+```bash
+cd Tests/python
+source vehicle_control_env/bin/activate
+```
+
+- Rebuild the module (run from `Tests/python/python_binding`):
+```bash
+cd python_binding
+./rebuild.sh
+```
+
+- Quick verification in Python: 
+cd Tests/python/python_binding/build
+```python
+import localization_pybind_module as lm
+h = lm.AHRSLocHandler("../../../../vehicle_config.json", "../../../..localization_config.json")
+print(h.GetStaticDynamicTestState())  # 0: NOT_INITIALIZED, 1: STATIC, 2: DYNAMIC
+```
+
+- Notes:
+  - The build produces a shared object (.so) with an ABI suffix (e.g., `localization_pybind_module.cpython-310-x86_64-linux-gnu.so`). If the script’s final move step does not match the filename, the module will remain in the local `build/` directory. You can either set `PYTHONPATH` to that directory or adjust the script’s mv pattern to `localization_pybind_module*.so`.
+  - Ensure you always run `rebuild.sh` from `Tests/python/python_binding` with the virtual environment activated.
 
 ## 5. Offline Calculation Test Script
 
@@ -204,6 +234,7 @@ sudo apt-get install python3-tk
 - **Sensor Fusion**: Processes IMU, wheel speed, and steering data in sequence
 - **Trajectory Comparison**: Compares calculated trajectory with reference data
 - **Visualization**: Optional plot of calculated vs. reference trajectory
+- **Static/Dynamic Visualization**: See `Tests/python/python_binding/static_dynamic_test_visualization.py` to visualize accelerometer, gyroscope, wheel speeds, SD features and thresholds, and SD state over time.
 
 ### 5.3 Workflow
 1. Load trip data from specified directory

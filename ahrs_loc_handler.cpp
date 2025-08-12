@@ -46,13 +46,15 @@ AHRSLocHandler::AHRSLocHandler(const json& vehicle_config,
                 (std::string)"NED")),
       debug_mode_(localization_config_["debug_mode"]),
       debug_obj_(localization_config_["debug_mode"],
-                 localization_config_["control_modul_dir"]) {
+                 localization_config_["control_modul_dir"]),
+      static_dynamic_test_obj_(localization_config_)
+{
     InitializeSpeedEstimator();
 }
 AHRSLocHandler::AHRSLocHandler(const std::string& vehicle_config_path,
-                        const std::string& control_config_path)
+                        const std::string& localization_config_path)
     : vehicle_config_(json::parse(std::ifstream(vehicle_config_path))),
-      localization_config_(json::parse(std::ifstream(control_config_path))),
+      localization_config_(json::parse(std::ifstream(localization_config_path))),
       localization_obj_(
         localization_config_["vehicle_heading_estimation_mode"],
         localization_config_["vehicle_speed_estimation_mode"],
@@ -63,7 +65,9 @@ AHRSLocHandler::AHRSLocHandler(const std::string& vehicle_config_path,
                 (std::string)"NED")),
       debug_mode_(localization_config_["debug_mode"]),
       debug_obj_(localization_config_["debug_mode"],
-                 localization_config_["control_modul_dir"]) {
+                 localization_config_["control_modul_dir"]),
+      static_dynamic_test_obj_(localization_config_)
+{
     InitializeSpeedEstimator();
 }
 
@@ -85,6 +89,10 @@ void AHRSLocHandler::UpdateIMU(const ImuSample& sample, PreciseSeconds clock) {
                             sample.time_stamp);
     //notice gyro integration is done using imu sample timestamp
     AHRS_obj_.UpdateGravity({sample.acc_.x, sample.acc_.y, sample.acc_.z});
+
+    // Update static/dynamic test with IMU sample
+    static_dynamic_test_obj_.UpdateIMU(sample);
+
     if (localization_config_["vehicle_heading_estimation_mode"] == "IMU") {
         vector<double> euler = Rot_mat2euler(AHRS_obj_.Rnb_);
         UpdateHeading(euler[2], clock);
@@ -151,8 +159,14 @@ void AHRSLocHandler::UpdateSpeed(PreciseMps speed, PreciseSeconds clock) {
     { // use speed odometry 
         localization_obj_.UpdateSpeed(speed * 
             double(localization_config_["speed_measurement_scale_factor"]));
+
+        // Update static/dynamic test with measured car speed
+        static_dynamic_test_obj_.UpdateCarSpeed(speed);
     } else { // this call is followed by a rear wheel update
         localization_obj_.UpdateSpeed(speed_estimator_->GetEstimatedSpeed());
+
+        // Update static/dynamic test with estimated car speed
+        static_dynamic_test_obj_.UpdateCarSpeed(speed_estimator_->GetEstimatedSpeed());
     }
     UpdatePosition(clock);
 }
