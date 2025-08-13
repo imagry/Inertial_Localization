@@ -77,12 +77,13 @@ def main():
     times = []
     acc_x = []; acc_y = []; acc_z = []
     gyro_x = []; gyro_y = []; gyro_z = []
+    gyro_x_bias = []; gyro_y_bias = []; gyro_z_bias = []
     speed_rr = []; speed_rl = []
     sd_state = []
     feat_acc_std = []; feat_gyro_std = []; feat_speed_mean = []; feat_speed_max = []
 
     # Bias records
-    bias_x = []; bias_y = []; bias_z = []
+    bias_x_est = []; bias_y_est = []; bias_z_est = []
 
     last_acc = np.array([0.0, 0.0, 0.0])
     last_gyro = np.array([0.0, 0.0, 0.0])
@@ -108,6 +109,10 @@ def main():
             loc_handler.UpdateIMU(imu, float(t))
             last_acc = np.array([acc_vec.x, acc_vec.y, acc_vec.z])
             last_gyro = np.array([gyro_vec.x, gyro_vec.y, gyro_vec.z])
+            gbx = float(data["x_gyro_bias"]) * np.pi/180
+            gby = float(data["y_gyro_bias"]) * np.pi/180
+            gbz = float(data["z_gyro_bias"]) * np.pi/180
+            last_gyro_bias = np.array([gbx, gby, gbz])
 
         elif sensor_id == "left_rear_wheel_speed" and localization_config["vehicle_speed_estimation_mode"] == "rear_average":
             last_rl = float(data["data_value"]) / 3.6
@@ -131,11 +136,12 @@ def main():
         times.append(float(t))
         acc_x.append(last_acc[0]); acc_y.append(last_acc[1]); acc_z.append(last_acc[2])
         gyro_x.append(last_gyro[0]); gyro_y.append(last_gyro[1]); gyro_z.append(last_gyro[2])
+        gyro_x_bias.append(last_gyro_bias[0]); gyro_y_bias.append(last_gyro_bias[1]); gyro_z_bias.append(last_gyro_bias[2])
         speed_rr.append(last_rr); speed_rl.append(last_rl)
         sd_state.append(s)
         feat_acc_std.append(acc_std_v); feat_gyro_std.append(gyro_std_v)
         feat_speed_mean.append(speed_mean_v); feat_speed_max.append(speed_max_v)
-        bias_x.append(bx); bias_y.append(by); bias_z.append(bz)
+        bias_x_est.append(bx); bias_y_est.append(by); bias_z_est.append(bz)
 
     # Plot: left col = 4 SD plots, right col = 3 bias plots (share x within each col)
     os.makedirs(args.output_dir, exist_ok=True)
@@ -177,15 +183,18 @@ def main():
     bx2 = fig.add_subplot(gs[2, 1], sharex=ax0)
 
     bx0.plot(times, gyro_x, label='gyro_x')
-    bx0.plot(times, bias_x, 'k--', label='bias_x')
+    bx0.plot(times, bias_x_est, 'k--', label='bias_x_est')
+    bx0.plot(times, gyro_x_bias, 'r--', label='bias_x_IMU')
     bx0.set_title('Gyro X and Bias'); bx0.grid(True); bx0.legend(loc='best')
 
     bx1.plot(times, gyro_y, label='gyro_y')
-    bx1.plot(times, bias_y, 'k--', label='bias_y')
+    bx1.plot(times, bias_y_est, 'k--', label='bias_y_est')
+    bx1.plot(times, gyro_y_bias, 'r--', label='bias_y_IMU')
     bx1.set_title('Gyro Y and Bias'); bx1.grid(True); bx1.legend(loc='best')
 
     bx2.plot(times, gyro_z, label='gyro_z')
-    bx2.plot(times, bias_z, 'k--', label='bias_z')
+    bx2.plot(times, bias_z_est, 'k--', label='bias_z_est')
+    bx2.plot(times, gyro_z_bias, 'r--', label='bias_z_IMU')
     bx2.set_title('Gyro Z and Bias'); bx2.grid(True); bx2.legend(loc='best')
 
     plt.tight_layout()

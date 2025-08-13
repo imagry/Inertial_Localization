@@ -20,6 +20,8 @@ if __name__ == '__main__':
     parser.add_argument('--metric_type', type=str, choices=['Driving', 'Time', 'Turning'], 
                         default='Driving',
                         help='Type of metric to use for comparison (default: Driving)')
+    parser.add_argument('--carpose_path', type=str, default=None,
+                        help='Optional path to car pose CSV file; if not provided, discovered from trip_path')
     args = parser.parse_args()
     script_dir = os.path.dirname(os.path.abspath(__file__))
     def compare_carpose_to_gps(metric_type="Driving"):
@@ -41,7 +43,8 @@ if __name__ == '__main__':
                 data["timestamp"].append(float(splited[0]))
                 data["x"].append(float(splited[1]))
                 data["y"].append(- float(splited[2]))
-                data["psi"].append( - float(splited[3]) * np.pi / 180)
+                data["psi"].append( - float(splited[3]) * np.pi / 180)# assume psi is in degrees
+                # minus signes are because the carpose is saved in ENU frame 
             return data
         
         def time_interval_indexes(gt_timestamps, time_interval):
@@ -133,7 +136,14 @@ if __name__ == '__main__':
             return dp_error_norm
 
 
-        carpose = parse_car_pose_file(car_pose_path())
+        # Select car pose path from optional CLI arg or discover from trip_path
+        if args.carpose_path is not None:
+            if not os.path.exists(args.carpose_path):
+                raise FileNotFoundError(f"Provided carpose_path does not exist: {args.carpose_path}")
+            carpose_file = args.carpose_path
+        else:
+            carpose_file = car_pose_path()
+        carpose = parse_car_pose_file(carpose_file)
         carpose_x = np.array(carpose['x'])
         carpose_y = np.array(carpose['y'])
         carpose_yaw = np.array(carpose['psi'])
@@ -311,7 +321,7 @@ if __name__ == '__main__':
             plt.plot(gt_r[:, 0], gt_r[:, 1], '--', label=f'gt R {err_r:.1f}')
             plt.plot([0], [0], '*k')
             plt.legend()
-            plt.show()
+            # plt.show()
         return est_r
     # Set up script configuration from command-line arguments
     script_config = {

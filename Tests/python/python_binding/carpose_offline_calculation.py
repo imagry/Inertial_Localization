@@ -6,6 +6,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from scipy.spatial.transform import Rotation
+import csv
 
 # Add the path to import Classes module
 sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
@@ -26,8 +27,6 @@ except ImportError as e:
 def main():
     """
     Main function for loading AI-driver trip data.
-    This script implements part of B7 from the localization separation plan:
-    B7: Create Python test script for loading AI-driver trip data
     """
     # Setup argument parser with only necessary arguments
     parser = argparse.ArgumentParser(description='Load AI-driver trip data using Classes.Trip.')
@@ -260,6 +259,17 @@ def main():
     print(f"final_pose_y={final_y:.6f}")
     print(f"final_pose_yaw={final_yaw:.6f}")
     print("TESTOUTPUT_END")
+
+    # Save car_pose to CSV in output_dir
+    os.makedirs(args.output_dir, exist_ok=True)
+    trip_prefix = Path(args.trip_path).name
+    car_pose_csv = os.path.join(args.output_dir, f"{trip_prefix}_carpose_offline_calculation_output.csv")
+    with open(car_pose_csv, 'w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(['timestamp', 'x', 'y', 'yaw'])
+        for t, x, y, yaw in zip(car_pose['timestamp'], car_pose['x'], car_pose['y'], car_pose['yaw']):
+            writer.writerow([t, x, - y, - yaw]) # saved in ENU frame to comply with ai driver carpose
+    print(f"Saved car pose CSV to {car_pose_csv}")
     
     # Visualize the results if requested
     if args.visualize:
@@ -276,18 +286,18 @@ def main():
         ax_traj = fig.add_subplot(gs[:, 0])
         
         # Plot the trajectory
-        if False:  # plot GPS
-            ax_traj.plot(trip_obj.N, trip_obj.E, 'g-', linewidth=2, label='GPS Track')
-        ax_traj.plot(car_pose["x"], car_pose["y"], 'b-', linewidth=2, label='Our Localization')
+        if True:  # plot GPS
+            ax_traj.plot(trip_obj.E, trip_obj.N, 'g-', linewidth=2, label='GPS Track')
+        ax_traj.plot(car_pose["y"], car_pose["x"], 'b-', linewidth=2, label='Our Localization')
         
         # Also plot external car pose if available
         if external_car_pose is not None:
             carpose_x = np.array(external_car_pose['x'])
             carpose_y = np.array(external_car_pose['y'])
-            ax_traj.plot(carpose_x, carpose_y, 'r-', linewidth=2, label='External Localization')
+            ax_traj.plot(carpose_y, carpose_x, 'r-', linewidth=2, label='External Localization')
         
-        ax_traj.scatter(car_pose["x"][0], car_pose["y"][0], c='g', s=100, label='Start')
-        ax_traj.scatter(car_pose["x"][-1], car_pose["y"][-1], c='r', s=100, label='End')
+        ax_traj.scatter(car_pose["y"][0], car_pose["x"][0], c='g', s=100, label='Start')
+        ax_traj.scatter(car_pose["y"][-1], car_pose["x"][-1], c='r', s=100, label='End')
         ax_traj.grid(True)
         ax_traj.set_aspect('equal')
         ax_traj.set_title('Vehicle Trajectory', fontsize=14)
@@ -347,9 +357,9 @@ def main():
         plt.tight_layout()
         
         # Save the combined plots
-        combined_plot_path = os.path.join(args.output_dir, 'combined_comparison.png')
-        fig.savefig(combined_plot_path, dpi=150, bbox_inches='tight')
-        print(f"Combined comparison plots saved to {combined_plot_path}")
+        output_plot_path = os.path.join(args.output_dir, 'carpose_offline_calculation_output.png')
+        fig.savefig(output_plot_path, dpi=150, bbox_inches='tight')
+        print(f"Combined comparison plots saved to {output_plot_path}")
         
         # Show all plots
         plt.show()
