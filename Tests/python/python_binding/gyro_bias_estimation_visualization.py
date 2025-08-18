@@ -44,7 +44,7 @@ def main():
                         help='Path to the trip data directory')
     parser.add_argument('--output_dir', type=str, default='./results',
                         help='Directory to save plots')
-    parser.add_argument('--show', action='store_true', default=False,
+    parser.add_argument('--show', action='store_true', default=True,
                         help='Show the plot window in addition to saving')
     args = parser.parse_args()
 
@@ -87,6 +87,7 @@ def main():
 
     last_acc = np.array([0.0, 0.0, 0.0])
     last_gyro = np.array([0.0, 0.0, 0.0])
+    last_gyro_bias = np.array([0.0, 0.0, 0.0])
     last_rr = 0.0; last_rl = 0.0
 
     for reading in tqdm(trip_obj.sorted_localization_inputs, desc="Streaming sensors"):
