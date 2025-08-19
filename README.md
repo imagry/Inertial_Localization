@@ -117,6 +117,18 @@ flowchart TD
   - `SaveLocData()`: Save localization data to file
   - `CreateDirectories()`: Create necessary directories for logs
 
+### 3.6 Static/Dynamic State Detector (`Utils/StaticDynamicTest.cpp/hpp`)
+- **Function**: Determines if the vehicle is stationary or in motion
+- **Input**:
+  - IMU measurements (accelerometer and gyroscope)
+  - Car speed
+- **Output**:
+  - A state: `STATIC`, `DYNAMIC`, or `NOT_INITIALIZED`
+- **Key Methods**:
+  - `UpdateIMU()`: Process new IMU data
+  - `UpdateCarSpeed()`: Process car speed data
+  - `GetState()`: Retrieve the current motion state
+
 ## 4. Python Binding Model
 
 The Python binding layer provides a clean interface to access the C++ localization functionality from Python applications. It is implemented using pybind11.
@@ -140,6 +152,25 @@ The Python binding layer provides a clean interface to access the C++ localizati
 - **State Access Methods**:
   - `GetPosition()`: Get current position [x, y, z]
   - `GetVehicleHeading()`: Get current vehicle heading
+  - `GetStaticDynamicTestState()`: Get Static/Dynamic state (0: NOT_INITIALIZED, 1: STATIC, 2: DYNAMIC)
+  - `GetStaticDynamicTestSensorsFeatures()`: Get tuple `(acc_std, gyro_std, speed_mean, speed_max)`
+  - `GetGyroBiases()`: Get tuple `(bias_x, bias_y, bias_z)` representing current estimated gyro biases
+
+### 4.5 Gyro Bias Estimation
+- **Component**: `Utils/GyroBiasStaticEstimator.hpp`
+- **Purpose**: Estimate gyroscope biases during static periods.
+- **Inputs**:
+  - Gyro samples (rad/s) per axis
+  - IMU timestamps (seconds)
+  - Config parameters: `gyro_bias_estimation_buffer_size`, `nominal_IMU_freq`
+- **Operation**:
+  - Buffers gyro readings per axis with size `gyro_bias_estimation_buffer_size`.
+  - If time between samples exceeds `10 * (1 / nominal_IMU_freq)`, buffers are reset.
+  - When buffers are full and SD test reports `STATIC`, compute per-axis means to set biases.
+- **Usage via Python**:
+  - `GetGyroBiases()` returns current biases as `(bx, by, bz)`.
+- **Visualization**:
+  - Use `Tests/python/python_binding/gyro_bias_estimation_visualization.py` to plot gyro axes, SD features/thresholds, state, and per-axis biases over time.
 
 ### 4.3 Usage Example
 ```python
@@ -165,6 +196,34 @@ loc_handler.UpdateSteeringWheel(0.1, timestamp)
 position = loc_handler.GetPosition()
 heading = loc_handler.GetVehicleHeading()
 ```
+
+### 4.4 Environment and Build Instructions
+
+Follow these steps to build the Python module using pybind11.
+
+- Activate the virtual environment (created under `Tests/python/`):
+```bash
+cd Tests/python
+source vehicle_control_env/bin/activate
+```
+
+- Rebuild the module (run from `Tests/python/python_binding`):
+```bash
+cd python_binding
+./rebuild.sh
+```
+
+- Quick verification in Python: 
+cd Tests/python/python_binding/build
+```python
+import localization_pybind_module as lm
+h = lm.AHRSLocHandler("../../../../vehicle_config.json", "../../../..localization_config.json")
+print(h.GetStaticDynamicTestState())  # 0: NOT_INITIALIZED, 1: STATIC, 2: DYNAMIC
+```
+
+- Notes:
+  - The build produces a shared object (.so) with an ABI suffix (e.g., `localization_pybind_module.cpython-310-x86_64-linux-gnu.so`). If the script’s final move step does not match the filename, the module will remain in the local `build/` directory. You can either set `PYTHONPATH` to that directory or adjust the script’s mv pattern to `localization_pybind_module*.so`.
+  - Ensure you always run `rebuild.sh` from `Tests/python/python_binding` with the virtual environment activated.
 
 ## 5. Offline Calculation Test Script
 
@@ -192,6 +251,7 @@ sudo apt-get install python3-tk
 - **Sensor Fusion**: Processes IMU, wheel speed, and steering data in sequence
 - **Trajectory Comparison**: Compares calculated trajectory with reference data
 - **Visualization**: Optional plot of calculated vs. reference trajectory
+- **Static/Dynamic Visualization**: See `Tests/python/python_binding/gyro_bias_estimation_visualization.py` to visualize accelerometer, gyroscope, wheel speeds, SD features and thresholds, SD state, and gyro biases over time.
 
 ### 5.3 Workflow
 1. Load trip data from specified directory
@@ -249,6 +309,15 @@ The Inertial Localization system implements a comprehensive suite of unit tests 
     - Configures handler to use "rear_average" speed estimation mode
     - Sets different speeds for left (5.2 m/s) and right (4.8 m/s) wheels
     - Confirms internal state speed is set to the average (5.0 m/s)
+
+#### 6.1.4 StaticDynamicTest Tests
+- **File**: `Tests/test_static_dynamic_test.cpp`
+- **Test Cases**:
+  - **Initialization**: Verifies the class initializes to the `NOT_INITIALIZED` state.
+  - **StateNotInitializedUntilBuffersAreFull**: Ensures the state does not change until all data buffers are full.
+  - **TransitionToStatic**: Confirms the state correctly transitions to `STATIC` when provided with low-variance sensor data.
+  - **TransitionToDynamic**: A set of tests to verify the state correctly transitions to `DYNAMIC` when any of the individual sensor inputs (accelerometer, gyroscope, car speed mean, car speed max) exceed their configured thresholds.
+  - **State Transitions**: Verifies correct state changes from `STATIC` to `DYNAMIC` and back to `STATIC` based on the input data stream.
 
 ### 6.2 Building the Tests
 

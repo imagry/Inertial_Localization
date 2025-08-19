@@ -10,6 +10,7 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 #include <tuple>
 #include <Eigen/Dense>
 #include "units.hpp"
+#include "Sensors.hpp"
 
 // Replaced directive with declarations:
 using Eigen::Matrix3d;
@@ -319,3 +320,19 @@ double Vector_2_norm(const std::vector<double>& vec);
  * @return std::vector<double> Vector of norms
  */
 std::vector<double> Norm_nX2_array(const std::vector<std::vector<double>>& nX2_array);
+
+/**
+ * @brief Calculate the Euclidean norm of a 3D vector.
+ * 
+ * @param vec 3D vector
+ * @return double Euclidean norm
+ */
+double VectorNorm3D(const Vec3d& vec);
+
+/**
+ * @brief Calculate the standard deviation of a vector of doubles.
+ * 
+ * @param vec Vector of doubles
+ * @return double Standard deviation
+ */
+double StandardDeviation(const std::vector<double>& vec);

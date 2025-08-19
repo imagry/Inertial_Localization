@@ -5,7 +5,6 @@ Created on Thu Feb 19 2024 by Eran Vertzberger
 */
 #pragma once
 
-#include "Classes.hpp"
 #include "units.hpp"
 
 struct Vec3d {

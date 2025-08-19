@@ -12,5 +12,13 @@
     "visualization_data_path": "/home/eranvertz/git/Inertial_Localization/data/temp_results/visualization_data",
     "imu_acc_noise_density": 1e-2,
     "imu_acc_bias_instability": 9.81e-5,
-    "wheel_speed_noise_std": 1.5611
+    "wheel_speed_noise_std": 1.5611,
+    "SD_test_acc_std_th": 1e-1,
+    "SD_test_gyro_std_th": 1e-3,
+    "SD_test_carspeed_mean_th": 1e-3,
+    "SD_test_carspeed_max_th": 1e-3,
+    "SD_test_acc_buffer_size": 100,
+    "SD_test_gyro_buffer_size": 100,
+    "SD_test_carspeed_buffer_size": 100,
+    "gyro_bias_estimation_buffer_size": 500
 }

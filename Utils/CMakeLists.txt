@@ -6,6 +6,7 @@ set(SOURCE_FILES
   AHRS.cpp
   short_term_localization.cpp
   SpeedEstimators.cpp
+  StaticDynamicTest.cpp
 )
 include(FetchContent)
 

@@ -83,6 +83,16 @@ struct BufferAny {
      * @return int Number of values currently stored
      */
     int Size();
+
+    /**
+     * @brief Flush all values from the buffer (size becomes zero).
+     */
+    void ResetBuffer();
+
+    /**
+     * @brief Return all values as vector<double> (for buffers of doubles).
+     */
+    std::vector<double> GetBufferValues();
 };
 
 /**
