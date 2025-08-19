@@ -13,7 +13,8 @@ old_and_unused_code/
 .idea
 cmake-bin/
 .vscode/
-
+results/
+Tests/python/results/
 # CMake generated files
 **/CMakeFiles/
 **/CMakeCache.txt
@@ -33,4 +34,4 @@ Tests/python/python_binding/**/*.bin
 Tests/python/python_binding/**/*.exe
 Tests/python/python_binding/CMakeFiles/
 Tests/python/python_binding/CMakeFiles/3.28.1/
-results/
+Tests/python/python_binding/results/
